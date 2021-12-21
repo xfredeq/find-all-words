@@ -15,7 +15,7 @@
 <h4>Authors:</h4>
 
 <ul>
-    <li style="list-style-type:square">Mateusz Frąckowiak</li>
-    <li style="list-style-type:square">Paweł Strzelczyk</li>
+    <li>Mateusz Frąckowiak</li>
+    <li>Paweł Strzelczyk</li>
     
 </ul>
