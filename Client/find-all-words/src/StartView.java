@@ -7,6 +7,7 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
     private final String viewName;
 
+
     private final JLabel title = new JLabel("Find all Words!");
 
     public JButton connect;
@@ -14,18 +15,26 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
     public StartView() {
         this.viewName = "StartView";
+
+
+
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
         setComponents();
         addComponents();
     }
 
     private void setComponents() {
 
+
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setFont(new Font("Bradley Hand ITC", Font.BOLD, 120));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.RED);
         title.setOpaque(true);
+
+        //this.menuBar
+
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
         connect.addActionListener(this);
