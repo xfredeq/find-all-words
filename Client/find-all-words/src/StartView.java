@@ -9,8 +9,8 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
     private final JLabel title = new JLabel("Find all Words!");
 
-    public JButton connect = new JButton("Connect to server");
-    public JButton exit = new JButton("Exit");
+    public JButton connect;
+    public JButton exit;
 
     public StartView() {
         this.viewName = "StartView";
@@ -27,18 +27,10 @@ public class StartView extends JPanel implements MyView, ActionListener {
         title.setForeground(Color.RED);
         title.setOpaque(true);
 
-        connect.setAlignmentX(Component.CENTER_ALIGNMENT);
-        connect.setPreferredSize(new Dimension(200, 80));
-        connect.setBackground(Color.BLUE);
-        connect.setForeground(Color.BLACK);
-        connect.setFont(new Font("Arial", Font.BOLD, 25));
+        this.connect = Tools.createButton("Connect to server", Color.BLUE);
         connect.addActionListener(this);
 
-        exit.setAlignmentX(Component.CENTER_ALIGNMENT);
-        exit.setPreferredSize(new Dimension(200, 80));
-        exit.setBackground(Color.RED);
-        exit.setForeground(Color.BLACK);
-        exit.setFont(new Font("Arial", Font.BOLD, 25));
+        this.exit = Tools.createButton("Exit", Color.RED);
         exit.addActionListener(this);
 
     }

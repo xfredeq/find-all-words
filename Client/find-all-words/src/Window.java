@@ -17,6 +17,13 @@ public class Window extends JFrame implements ActionListener {
         this.setSize(new Dimension(1024, 720));
         this.setLocationRelativeTo(null);
 
+        try {
+            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            SwingUtilities.updateComponentTreeUI(this);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+
         this.cardLayout = new CardLayout();
         this.views = new ArrayList<>();
         this.cardPane = new JPanel(this.cardLayout);
@@ -35,7 +42,6 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
-
         for (var view : this.views) {
             view.getNextViewButton().addActionListener(this);
             this.cardPane.add((Component) view, view.getViewName());
