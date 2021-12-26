@@ -14,6 +14,7 @@ public class Window extends JFrame implements ActionListener {
     private JMenu menuFile, menuSettings, menuHelp;
     private JMenuItem close, connectionSettings;
 
+    private ConnectionDialog connectionDialog;
 
     public Window() {
         super("FindAllWords");
@@ -87,8 +88,10 @@ public class Window extends JFrame implements ActionListener {
         if (source == this.close) {
             dispose();
         } else if (source == this.connectionSettings) {
-            JDialog dialog = new ConnectionDialog(this);
-            dialog.setVisible(true);
+            if(this.connectionDialog == null) {
+                connectionDialog = new ConnectionDialog(this);
+            }
+            connectionDialog.setVisible(true);
         }
 
         for (var view : this.views) {
