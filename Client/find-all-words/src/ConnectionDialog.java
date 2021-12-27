@@ -66,8 +66,7 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
 
         this.server.setForeground(Color.BLACK);
         this.server.setFont(new Font("Arial", Font.BOLD, 25));
-        //this.server.setOpaque(true);
-        //this.server.setVisible(true);
+
 
         this.addressLabel.setForeground(Color.BLACK);
         this.addressLabel.setFont(new Font("Arial", Font.ITALIC, 20));

@@ -131,6 +131,9 @@ public class Window extends JFrame implements ActionListener {
                 view.moveToNextView(this.cardLayout, this.cardPane);
                 nextView.onShowAction();
             } else if (source == view.getPreviousViewButton()) {
+                if (view.getViewName().equals("ConnectingView")) {
+                    this.menuSettings.setVisible(true);
+                }
                 view.returnToPreviousView(this.cardLayout, this.cardPane);
             }
         }
