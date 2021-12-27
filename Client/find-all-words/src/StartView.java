@@ -5,19 +5,16 @@ import java.awt.event.ActionListener;
 
 public class StartView extends JPanel implements MyView, ActionListener {
 
-    private final String viewName;
+    private String viewName;
+    private String nextViewName;
 
 
-    private final JLabel title = new JLabel("Find all Words!");
+    private JLabel title;
 
-    public JButton connect;
-    public JButton exit;
+    private JButton connect;
+    private JButton exit;
 
     public StartView() {
-        this.viewName = "StartView";
-
-
-
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         setComponents();
@@ -25,6 +22,9 @@ public class StartView extends JPanel implements MyView, ActionListener {
     }
 
     private void setComponents() {
+        this.viewName = "StartView";
+        this.nextViewName = "ConnectingView";
+        this.title = new JLabel("Find all Words!");
 
 
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -32,8 +32,6 @@ public class StartView extends JPanel implements MyView, ActionListener {
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.RED);
         title.setOpaque(true);
-
-        //this.menuBar
 
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
@@ -46,11 +44,11 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
     private void addComponents() {
         add(Box.createVerticalGlue());
-        add(title);
+        add(this.title);
         add(Box.createVerticalGlue());
-        add(connect);
+        add(this.connect);
         add(Box.createVerticalGlue());
-        add(exit);
+        add(this.exit);
         add(Box.createVerticalGlue());
 
     }
@@ -61,13 +59,33 @@ public class StartView extends JPanel implements MyView, ActionListener {
     }
 
     @Override
+    public String getNextViewName() {
+        return this.nextViewName;
+    }
+
+    @Override
     public JButton getNextViewButton() {
         return this.connect;
     }
 
     @Override
+    public JButton getPreviousViewButton() {
+        return null;
+    }
+
+    @Override
+    public void onShowAction() {
+
+    }
+
+    @Override
     public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-        this.connect.setBackground(Color.PINK);
+        cardLayout.show(cardPane, this.nextViewName);
+    }
+
+    @Override
+    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
+
     }
 
     @Override

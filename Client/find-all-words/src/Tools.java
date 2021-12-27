@@ -2,7 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Tools {
-    public static JButton createButton(String text, Color color, Font font){
+    public static JButton createButton(String text, Color color, Font font) {
         JButton button = new JButton(text);
 
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -14,7 +14,7 @@ public class Tools {
         return button;
     }
 
-    public static JButton createButton(String text, Color color){
+    public static JButton createButton(String text, Color color) {
         JButton button = new JButton(text);
 
         button.setAlignmentX(Component.CENTER_ALIGNMENT);

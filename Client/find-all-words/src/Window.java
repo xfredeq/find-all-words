@@ -12,7 +12,7 @@ public class Window extends JFrame implements ActionListener {
 
     private final JMenuBar menuBar;
     private JMenu menuFile, menuSettings, menuHelp;
-    private JMenuItem close, connectionSettings;
+    private JMenuItem close, connectionSettings, about;
 
     private ConnectionDialog connectionDialog;
 
@@ -51,18 +51,26 @@ public class Window extends JFrame implements ActionListener {
     private void setMyMenuBar() {
 
         this.menuFile = new JMenu("File");
-        this.menuSettings = new JMenu("Settings");
-        this.menuHelp = new JMenu("Help");
-
         this.close = new JMenuItem("Close");
-        this.connectionSettings = new JMenuItem("Connection");
-
         this.close.addActionListener(this);
-        this.connectionSettings.addActionListener(this);
+        this.close.setAccelerator(KeyStroke.getKeyStroke("ctrl X"));
 
         this.menuFile.add(this.close);
 
+
+        this.menuSettings = new JMenu("Settings");
+        this.connectionSettings = new JMenuItem("Connection");
+        this.connectionSettings.addActionListener(this);
+
         this.menuSettings.add(this.connectionSettings);
+
+
+        this.menuHelp = new JMenu("Help");
+        this.about = new JMenuItem("About");
+        this.about.addActionListener(this);
+
+        this.menuHelp.add(this.about);
+
 
         this.menuBar.add(this.menuFile);
         this.menuBar.add(this.menuSettings);
@@ -75,8 +83,14 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
+        this.views.add(new LoadingView());
         for (var view : this.views) {
-            view.getNextViewButton().addActionListener(this);
+            if (view.getNextViewButton() != null) {
+                view.getNextViewButton().addActionListener(this);
+            }
+            if (view.getPreviousViewButton() != null) {
+                view.getPreviousViewButton().addActionListener(this);
+            }
             this.cardPane.add((Component) view, view.getViewName());
         }
     }
@@ -86,18 +100,38 @@ public class Window extends JFrame implements ActionListener {
         Object source = e.getSource();
 
         if (source == this.close) {
-            dispose();
+            int result = JOptionPane.showConfirmDialog(null, "Are you sure?", "Exit confirmation", JOptionPane.YES_NO_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                dispose();
+            }
+
+        } else if (source == this.about) { // #TODO text from properties
+            JOptionPane.showMessageDialog(this, "TODO", "About", JOptionPane.INFORMATION_MESSAGE);
+
         } else if (source == this.connectionSettings) {
-            if(this.connectionDialog == null) {
+            if (this.connectionDialog == null) {
                 connectionDialog = new ConnectionDialog(this);
             }
             connectionDialog.setVisible(true);
         }
 
         for (var view : this.views) {
+            MyView nextView = null;
 
             if (source == view.getNextViewButton()) {
+                if (view.getViewName().equals("StartView")) {
+                    this.menuSettings.setVisible(false);
+                }
+                for (var v : this.views) {
+                    if (view.getNextViewName().equals(v.getViewName())) {
+                        nextView = v;
+                        break;
+                    }
+                }
                 view.moveToNextView(this.cardLayout, this.cardPane);
+                nextView.onShowAction();
+            } else if (source == view.getPreviousViewButton()) {
+                view.returnToPreviousView(this.cardLayout, this.cardPane);
             }
         }
     }
