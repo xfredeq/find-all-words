@@ -15,9 +15,9 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
     private JTextField address, port;
     private JButton confirm, cancel, dflt;
 
+
     ConnectionDialog(JFrame owner) {
         super(owner, "Connection Settings", true);
-
 
         this.setSize(new Dimension(720, 480));
         this.setLocationRelativeTo(null);
@@ -52,8 +52,8 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
         this.addressLabel = new JLabel("IP address:");
         this.portLabel = new JLabel("Port:");
 
-        this.address = new JTextField("127.0.0.1");
-        this.port = new JTextField("1313");
+        this.address = new JTextField(PropertiesHandler.getProperty("defaultAddress"));
+        this.port = new JTextField(PropertiesHandler.getProperty("defaultPort"));
 
         this.server.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.addressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -125,6 +125,7 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
 
+
         if (source == this.dflt) {
             this.setDefault();
         } else if (source == cancel) {
@@ -132,7 +133,9 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
             this.setDefault();
         } else if (source == this.confirm) {
             if (validateAddress() && validatePort()) {
-                //#TODO save to properties
+                PropertiesHandler.setProperty("serverAddress", this.address.getText());
+                PropertiesHandler.setProperty("serverPort", this.port.getText());
+                PropertiesHandler.saveProperties();
                 dispose();
             }
             //#TODO warning?

@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+
 // https://www.baeldung.com/a-guide-to-java-sockets
 public class SocketClient {
 
@@ -30,6 +31,31 @@ public class SocketClient {
         in.close();
         out.close();
         clientSocket.close();
+    }
+
+    public static void main(String[] args) {
+        SocketClient socketClient = new SocketClient();
+        try {
+            socketClient.startConnection("127.0.0.1", 1100);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socketClient.sendMessage("wiadomosc");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            System.out.println(socketClient.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            socketClient.stopConnection();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }

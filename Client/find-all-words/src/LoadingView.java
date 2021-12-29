@@ -21,8 +21,6 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
 
     LoadingView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-
         this.setComponents();
         this.addComponents();
     }
