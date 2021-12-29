@@ -88,7 +88,7 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
-        this.enter.setVisible(false);
+
         cardLayout.show(cardPane, "StartView");
     }
 

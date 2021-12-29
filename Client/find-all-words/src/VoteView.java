@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class VoteView extends JPanel implements MyView, ChangeListener, ActionListener {
+public class VoteView extends JPanel implements MyView, ActionListener {
 
     private String viewName;
     private String nextViewName;
@@ -112,7 +112,7 @@ public class VoteView extends JPanel implements MyView, ChangeListener, ActionLi
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
-        this.enter.setVisible(false);
+
         cardLayout.show(cardPane, "StartView");
     }
 
@@ -122,10 +122,6 @@ public class VoteView extends JPanel implements MyView, ChangeListener, ActionLi
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
-
-    }
-
     public void actionPerformed(ActionEvent ae) {
         if (ae.getActionCommand().equals("Yes")) {
             if (this.voteYes.isSelected()) {

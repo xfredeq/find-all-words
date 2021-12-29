@@ -110,7 +110,7 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
 
     @Override
     public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-
+        this.enter.setVisible(false);
         cardLayout.show(cardPane, this.nextViewName);
 
     }
