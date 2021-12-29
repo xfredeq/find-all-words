@@ -2,48 +2,62 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class LoadingView extends JPanel implements MyView, ChangeListener {
+public class VoteView extends JPanel implements MyView, ChangeListener, ActionListener {
 
     private String viewName;
     private String nextViewName;
 
     private JLabel title;
-
-    private JProgressBar progressBar;
-
     private JPanel buttonPanel;
+
+    private JPanel choicePanel;
+    private JRadioButton voteYes;
+    private JRadioButton voteNo;
+
+
     private JButton enter;
     private JButton cancel;
 
 
-    private Thread progressThread;
-
-    LoadingView() {
+    VoteView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setComponents();
         this.addComponents();
     }
 
     private void setComponents() {
-        this.viewName = "ConnectingView";
-        this.nextViewName = "LobbyView";
-        this.title = new JLabel("Connecting...");
-
+        this.viewName = "VoteView";
+        this.nextViewName = "TODO";
+        this.title = new JLabel("Voting...");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         title.setFont(new Font("Verdana", Font.BOLD, 80));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
-        title.setForeground(Color.RED);
+        title.setForeground(Color.BLUE);
         title.setOpaque(true);
 
-        this.progressBar = new JProgressBar();
-        this.progressBar.setPreferredSize(new Dimension(500, 100));
-        this.progressBar.setMaximumSize(new Dimension(500, 100));
-        this.progressBar.setStringPainted(true);
-        this.progressBar.addChangeListener(this);
+        this.voteYes = new JRadioButton("Yes");
+        this.voteYes.setActionCommand("Yes");
+        this.voteYes.addActionListener(this);
+
+        this.voteNo = new JRadioButton("No");
+        this.voteNo.setActionCommand("No");
+        this.voteNo.addActionListener(this);
+
+        this.choicePanel = new JPanel();
+        this.choicePanel.setLayout(new GridLayout(1, 3));
+        this.choicePanel.setPreferredSize(new Dimension(400, 60));
+        this.choicePanel.setMaximumSize(new Dimension(400, 60));
+
+        this.choicePanel.add(this.voteYes);
+        this.choicePanel.add(Box.createHorizontalGlue());
+        this.choicePanel.add(this.voteNo);
+
 
         this.enter = new JButton("Enter");
-        this.enter.setVisible(false);
         this.cancel = new JButton("cancel");
 
         this.buttonPanel = new JPanel();
@@ -62,7 +76,7 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
         add(Box.createVerticalGlue());
         add(this.title);
         add(Box.createVerticalGlue());
-        add(this.progressBar);
+        add(this.choicePanel);
         add(Box.createVerticalGlue());
         add(this.buttonPanel);
         add(Box.createVerticalGlue());
@@ -91,45 +105,38 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
 
     @Override
     public void onShowAction() {
-        this.progressBar.setValue(0);
-        this.progressThread = new Thread(() -> {
-            for (int i = 1; i <= 100; i++) {
-                progressBar.setValue(i);
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }, "progressThread");
-
-        progressThread.start();
-
 
     }
 
-    @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-
-        cardLayout.show(cardPane, this.nextViewName);
-
-    }
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
-        this.progressThread.interrupt();
         this.enter.setVisible(false);
         cardLayout.show(cardPane, "StartView");
     }
 
     @Override
+    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+
+    }
+
+    @Override
     public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
-        if (source == this.progressBar) {
-            if (this.progressBar.getValue() == 100) {
-                this.enter.setVisible(true);
+
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getActionCommand().equals("Yes")) {
+            if (this.voteYes.isSelected()) {
+                this.voteNo.setSelected(false);
+            }
+        } else if (ae.getActionCommand().equals("No")) {
+            if (this.voteNo.isSelected()) {
+                this.voteYes.setSelected(false);
             }
         }
+
+
     }
 }

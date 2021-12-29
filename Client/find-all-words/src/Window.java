@@ -84,6 +84,8 @@ public class Window extends JFrame implements ActionListener {
     private void addViews() {
         this.views.add(new StartView());
         this.views.add(new LoadingView());
+        this.views.add(new LobbyView());
+        this.views.add(new VoteView());
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);

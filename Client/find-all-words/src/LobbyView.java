@@ -2,48 +2,40 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
-public class LoadingView extends JPanel implements MyView, ChangeListener {
+public class LobbyView extends JPanel implements MyView, ChangeListener {
 
     private String viewName;
     private String nextViewName;
 
     private JLabel title;
-
-    private JProgressBar progressBar;
-
     private JPanel buttonPanel;
+
+
     private JButton enter;
     private JButton cancel;
 
 
-    private Thread progressThread;
-
-    LoadingView() {
+    LobbyView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setComponents();
         this.addComponents();
     }
 
     private void setComponents() {
-        this.viewName = "ConnectingView";
-        this.nextViewName = "LobbyView";
-        this.title = new JLabel("Connecting...");
-
+        this.viewName = "LobbyView";
+        this.nextViewName = "VoteView";
+        this.title = new JLabel("Lobby");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setAlignmentY(Component.TOP_ALIGNMENT);
         title.setFont(new Font("Verdana", Font.BOLD, 80));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
-        title.setForeground(Color.RED);
+        title.setForeground(Color.GREEN);
         title.setOpaque(true);
 
-        this.progressBar = new JProgressBar();
-        this.progressBar.setPreferredSize(new Dimension(500, 100));
-        this.progressBar.setMaximumSize(new Dimension(500, 100));
-        this.progressBar.setStringPainted(true);
-        this.progressBar.addChangeListener(this);
 
         this.enter = new JButton("Enter");
-        this.enter.setVisible(false);
         this.cancel = new JButton("cancel");
 
         this.buttonPanel = new JPanel();
@@ -61,8 +53,6 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
     private void addComponents() {
         add(Box.createVerticalGlue());
         add(this.title);
-        add(Box.createVerticalGlue());
-        add(this.progressBar);
         add(Box.createVerticalGlue());
         add(this.buttonPanel);
         add(Box.createVerticalGlue());
@@ -91,45 +81,24 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
 
     @Override
     public void onShowAction() {
-        this.progressBar.setValue(0);
-        this.progressThread = new Thread(() -> {
-            for (int i = 1; i <= 100; i++) {
-                progressBar.setValue(i);
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }, "progressThread");
-
-        progressThread.start();
-
 
     }
 
-    @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-
-        cardLayout.show(cardPane, this.nextViewName);
-
-    }
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
-        this.progressThread.interrupt();
         this.enter.setVisible(false);
         cardLayout.show(cardPane, "StartView");
     }
 
     @Override
+    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+        cardLayout.show(cardPane, this.nextViewName);
+    }
+
+    @Override
     public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
-        if (source == this.progressBar) {
-            if (this.progressBar.getValue() == 100) {
-                this.enter.setVisible(true);
-            }
-        }
+
     }
 }
