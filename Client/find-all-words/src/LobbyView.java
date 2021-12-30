@@ -3,6 +3,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 
 public class LobbyView extends JPanel implements MyView, ChangeListener {
 
@@ -10,6 +11,10 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
     private String nextViewName;
 
     private JLabel title;
+
+    private JPanel[] lobbies;
+
+
     private JPanel buttonPanel;
 
 
@@ -23,6 +28,10 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
         this.addComponents();
     }
 
+    /*public static <T> JPanel<T> safe(JPanel[] panels) {
+        return panels == null ? Collections.<T>emptyList() : panels;
+    }*/
+
     private void setComponents() {
         this.viewName = "LobbyView";
         this.nextViewName = "VoteView";
@@ -34,6 +43,25 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
         title.setForeground(Color.GREEN);
         title.setOpaque(true);
 
+        this.lobbies = new JPanel[5];
+        for (int i = 0; i < this.lobbies.length; i++) {
+            lobbies[i] = new JPanel();
+            if (lobbies[i] != null) {
+                System.out.println("dziala2");
+                lobbies[i].setLayout(new GridLayout(1, 4));
+                lobbies[i].setPreferredSize(new Dimension(400, 60));
+                lobbies[i].setMaximumSize(new Dimension(400, 60));
+                lobbies[i].add(new JLabel("Lobby "));
+                lobbies[i].add(new JLabel("2"));
+                lobbies[i].add(new JLabel("/"));
+                lobbies[i].add(new JLabel("5"));
+                lobbies[i].setForeground(Color.BLACK);
+                lobbies[i].setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
+                lobbies[i].setOpaque(true);
+                lobbies[i].setVisible(true);
+            }
+
+        }
 
         this.enter = new JButton("Enter");
         this.cancel = new JButton("cancel");
@@ -53,6 +81,14 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
     private void addComponents() {
         add(Box.createVerticalGlue());
         add(this.title);
+        add(Box.createVerticalGlue());
+        for (int i=0;i<this.lobbies.length;i++) {
+            if (lobbies[i] != null) {
+                add(lobbies[i]);
+            }
+
+
+        }
         add(Box.createVerticalGlue());
         add(this.buttonPanel);
         add(Box.createVerticalGlue());
