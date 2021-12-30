@@ -91,12 +91,15 @@ public class LoadingView extends JPanel implements MyView, ChangeListener {
 
     @Override
     public void onShowAction() {
+
+        //#TODO get lobby size from server
+
         this.progressBar.setValue(0);
         this.progressThread = new Thread(() -> {
             for (int i = 1; i <= 100; i++) {
                 progressBar.setValue(i);
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(20);
                 } catch (InterruptedException e) {
                     return;
                 }

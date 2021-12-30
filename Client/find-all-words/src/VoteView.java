@@ -1,6 +1,4 @@
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,7 +16,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
     private JRadioButton voteNo;
 
 
-    private JButton enter;
+    private JButton vote;
     private JButton cancel;
 
 
@@ -57,7 +55,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
         this.choicePanel.add(this.voteNo);
 
 
-        this.enter = new JButton("Enter");
+        this.vote = new JButton("Vote");
         this.cancel = new JButton("cancel");
 
         this.buttonPanel = new JPanel();
@@ -65,7 +63,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
         this.buttonPanel.setPreferredSize(new Dimension(400, 60));
         this.buttonPanel.setMaximumSize(new Dimension(400, 60));
 
-        this.buttonPanel.add(this.enter);
+        this.buttonPanel.add(this.vote);
         this.buttonPanel.add(Box.createHorizontalGlue());
         this.buttonPanel.add(this.cancel);
 
@@ -95,7 +93,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
 
     @Override
     public JButton getNextViewButton() {
-        return this.enter;
+        return this.vote;
     }
 
     @Override
@@ -113,7 +111,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
 
-        cardLayout.show(cardPane, "StartView");
+        cardLayout.show(cardPane, "LobbyView");
     }
 
     @Override

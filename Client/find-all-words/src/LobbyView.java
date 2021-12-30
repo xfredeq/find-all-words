@@ -3,22 +3,23 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Collections;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
-public class LobbyView extends JPanel implements MyView, ChangeListener {
+public class LobbyView extends JPanel implements MyView, ActionListener {
 
     private String viewName;
     private String nextViewName;
 
     private JLabel title;
 
-    private JPanel[] lobbies;
+    private ArrayList<Lobby> lobbies;
 
 
     private JPanel buttonPanel;
 
 
-    private JButton enter;
+    private JButton join;
     private JButton cancel;
 
 
@@ -43,27 +44,16 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
         title.setForeground(Color.GREEN);
         title.setOpaque(true);
 
-        this.lobbies = new JPanel[5];
-        for (int i = 0; i < this.lobbies.length; i++) {
-            lobbies[i] = new JPanel();
-            if (lobbies[i] != null) {
-                System.out.println("dziala2");
-                lobbies[i].setLayout(new GridLayout(1, 4));
-                lobbies[i].setPreferredSize(new Dimension(400, 60));
-                lobbies[i].setMaximumSize(new Dimension(400, 60));
-                lobbies[i].add(new JLabel("Lobby "));
-                lobbies[i].add(new JLabel("2"));
-                lobbies[i].add(new JLabel("/"));
-                lobbies[i].add(new JLabel("5"));
-                lobbies[i].setForeground(Color.BLACK);
-                lobbies[i].setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
-                lobbies[i].setOpaque(true);
-                lobbies[i].setVisible(true);
-            }
-
+        this.lobbies = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            this.lobbies.add(new Lobby());
+            this.lobbies.get(i).getSelect().addActionListener(this);
         }
 
-        this.enter = new JButton("Enter");
+        //#TODO ButtonPanelFactory
+
+        this.join = new JButton("Join lobby");
+        this.join.setVisible(false);
         this.cancel = new JButton("cancel");
 
         this.buttonPanel = new JPanel();
@@ -71,7 +61,7 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
         this.buttonPanel.setPreferredSize(new Dimension(400, 60));
         this.buttonPanel.setMaximumSize(new Dimension(400, 60));
 
-        this.buttonPanel.add(this.enter);
+        this.buttonPanel.add(this.join);
         this.buttonPanel.add(Box.createHorizontalGlue());
         this.buttonPanel.add(this.cancel);
 
@@ -82,10 +72,8 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
         add(Box.createVerticalGlue());
         add(this.title);
         add(Box.createVerticalGlue());
-        for (int i=0;i<this.lobbies.length;i++) {
-            if (lobbies[i] != null) {
-                add(lobbies[i]);
-            }
+        for (Lobby lobby : this.lobbies) {
+            this.add(lobby);
 
 
         }
@@ -107,7 +95,7 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
 
     @Override
     public JButton getNextViewButton() {
-        return this.enter;
+        return this.join;
     }
 
     @Override
@@ -124,17 +112,35 @@ public class LobbyView extends JPanel implements MyView, ChangeListener {
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
+        for (Lobby l : this.lobbies) {
+            l.getSelect().setBackground(Color.YELLOW);
+        }
+        this.join.setVisible(false);
 
         cardLayout.show(cardPane, "StartView");
     }
 
     @Override
     public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+        for (Lobby l : this.lobbies) {
+            l.getSelect().setBackground(Color.YELLOW);
+        }
+        this.join.setVisible(false);
         cardLayout.show(cardPane, this.nextViewName);
     }
 
-    @Override
-    public void stateChanged(ChangeEvent e) {
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+        for (Lobby lobby : this.lobbies) {
+            if (source == lobby.getSelect()) {
+                for (Lobby l : this.lobbies) {
+                    l.getSelect().setBackground(Color.YELLOW);
+                }
+                lobby.getSelect().setBackground(Color.GREEN);
+                this.join.setVisible(true);
+            }
+        }
     }
 }
