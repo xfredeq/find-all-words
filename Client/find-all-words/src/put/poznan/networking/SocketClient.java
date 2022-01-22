@@ -1,9 +1,9 @@
-import javax.swing.text.View;
+package put.poznan.networking;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
 
 // https://www.baeldung.com/a-guide-to-java-sockets

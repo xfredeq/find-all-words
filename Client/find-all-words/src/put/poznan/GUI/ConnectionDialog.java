@@ -1,3 +1,7 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.PropertiesHandler;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

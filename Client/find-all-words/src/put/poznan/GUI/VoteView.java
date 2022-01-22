@@ -1,12 +1,13 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.MyView;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class VoteView extends JPanel implements MyView, ActionListener {
-
-    private String viewName;
-    private String nextViewName;
+public class VoteView extends MyView implements ActionListener {
 
     private JLabel title;
     private JPanel buttonPanel;
@@ -29,6 +30,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
     private void setComponents() {
         this.viewName = "VoteView";
         this.nextViewName = "TODO";
+        this.previousViewName = "LobbyView";
         this.title = new JLabel("Voting...");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -57,6 +59,7 @@ public class VoteView extends JPanel implements MyView, ActionListener {
 
         this.vote = new JButton("Vote");
         this.cancel = new JButton("cancel");
+        this.previousViewButton = this.cancel;
 
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
@@ -82,26 +85,6 @@ public class VoteView extends JPanel implements MyView, ActionListener {
 
 
     @Override
-    public String getViewName() {
-        return this.viewName;
-    }
-
-    @Override
-    public String getNextViewName() {
-        return this.nextViewName;
-    }
-
-    @Override
-    public JButton getNextViewButton() {
-        return this.vote;
-    }
-
-    @Override
-    public JButton getPreviousViewButton() {
-        return this.cancel;
-    }
-
-    @Override
     public void onShowAction() {
 
     }
@@ -111,13 +94,10 @@ public class VoteView extends JPanel implements MyView, ActionListener {
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
 
-        cardLayout.show(cardPane, "LobbyView");
+        super.returnToPreviousView(cardLayout, cardPane);
     }
 
-    @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
 
-    }
 
     @Override
     public void actionPerformed(ActionEvent ae) {

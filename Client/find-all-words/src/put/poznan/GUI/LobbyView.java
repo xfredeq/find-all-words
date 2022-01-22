@@ -1,15 +1,15 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.MyView;
+
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class LobbyView extends JPanel implements MyView, ActionListener {
+public class LobbyView extends MyView implements ActionListener {
 
-    private String viewName;
-    private String nextViewName;
 
     private JLabel title;
 
@@ -36,6 +36,7 @@ public class LobbyView extends JPanel implements MyView, ActionListener {
     private void setComponents() {
         this.viewName = "LobbyView";
         this.nextViewName = "VoteView";
+        this.previousViewName = "StartView";
         this.title = new JLabel("Lobby");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -54,7 +55,10 @@ public class LobbyView extends JPanel implements MyView, ActionListener {
 
         this.join = new JButton("Join lobby");
         this.join.setVisible(false);
+        this.nextViewButton = this.join;
+
         this.cancel = new JButton("cancel");
+        this.previousViewButton = this.cancel;
 
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
@@ -74,34 +78,12 @@ public class LobbyView extends JPanel implements MyView, ActionListener {
         add(Box.createVerticalGlue());
         for (Lobby lobby : this.lobbies) {
             this.add(lobby);
-
-
         }
         add(Box.createVerticalGlue());
         add(this.buttonPanel);
         add(Box.createVerticalGlue());
     }
 
-
-    @Override
-    public String getViewName() {
-        return this.viewName;
-    }
-
-    @Override
-    public String getNextViewName() {
-        return this.nextViewName;
-    }
-
-    @Override
-    public JButton getNextViewButton() {
-        return this.join;
-    }
-
-    @Override
-    public JButton getPreviousViewButton() {
-        return this.cancel;
-    }
 
     @Override
     public void onShowAction() {
@@ -117,7 +99,7 @@ public class LobbyView extends JPanel implements MyView, ActionListener {
         }
         this.join.setVisible(false);
 
-        cardLayout.show(cardPane, "StartView");
+        super.returnToPreviousView(cardLayout, cardPane);
     }
 
     @Override
@@ -126,7 +108,7 @@ public class LobbyView extends JPanel implements MyView, ActionListener {
             l.getSelect().setBackground(Color.YELLOW);
         }
         this.join.setVisible(false);
-        cardLayout.show(cardPane, this.nextViewName);
+        super.moveToNextView(cardLayout, cardPane);
     }
 
 

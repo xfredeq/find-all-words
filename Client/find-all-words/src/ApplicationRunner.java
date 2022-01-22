@@ -1,3 +1,6 @@
+import put.poznan.GUI.Window;
+import put.poznan.tools.PropertiesHandler;
+
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 

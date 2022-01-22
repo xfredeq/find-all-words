@@ -1,3 +1,7 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.PropertiesHandler;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -41,8 +45,6 @@ public class Lobby extends JPanel {
 
         this.select = new JButton("select lobby");
         this.select.setBackground(Color.YELLOW);
-
-
     }
 
     private void addComponents() {

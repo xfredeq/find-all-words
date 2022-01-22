@@ -1,13 +1,14 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.MyView;
+import put.poznan.tools.Tools;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class StartView extends JPanel implements MyView, ActionListener {
-
-    private String viewName;
-    private String nextViewName;
-
+public class StartView extends MyView implements ActionListener {
 
     private JLabel title;
 
@@ -35,7 +36,7 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
-        connect.addActionListener(this);
+        this.nextViewButton = this.connect;
 
         this.exit = Tools.createButton("Exit", Color.RED);
         exit.addActionListener(this);
@@ -53,40 +54,12 @@ public class StartView extends JPanel implements MyView, ActionListener {
 
     }
 
-    @Override
-    public String getViewName() {
-        return this.viewName;
-    }
-
-    @Override
-    public String getNextViewName() {
-        return this.nextViewName;
-    }
-
-    @Override
-    public JButton getNextViewButton() {
-        return this.connect;
-    }
-
-    @Override
-    public JButton getPreviousViewButton() {
-        return null;
-    }
 
     @Override
     public void onShowAction() {
 
     }
 
-    @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-        cardLayout.show(cardPane, this.nextViewName);
-    }
-
-    @Override
-    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-
-    }
 
     @Override
     public void actionPerformed(ActionEvent e) {

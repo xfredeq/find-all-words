@@ -1,3 +1,5 @@
+package put.poznan.tools;
+
 import javax.swing.*;
 import java.awt.*;
 

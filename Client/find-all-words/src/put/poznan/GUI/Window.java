@@ -1,3 +1,7 @@
+package put.poznan.GUI;
+
+import put.poznan.tools.MyView;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -43,7 +47,7 @@ public class Window extends JFrame implements ActionListener {
         this.addViews();
 
         this.add(this.cardPane);
-        this.cardLayout.show(cardPane, "StartView");
+        this.cardLayout.show(cardPane, "put.poznan.GUI.StartView");
 
         this.setVisible(true);
     }
@@ -93,7 +97,7 @@ public class Window extends JFrame implements ActionListener {
             if (view.getPreviousViewButton() != null) {
                 view.getPreviousViewButton().addActionListener(this);
             }
-            this.cardPane.add((Component) view, view.getViewName());
+            this.cardPane.add(view, view.getViewName());
         }
     }
 
@@ -132,6 +136,7 @@ public class Window extends JFrame implements ActionListener {
                 }
                 view.moveToNextView(this.cardLayout, this.cardPane);
                 nextView.onShowAction();
+                System.out.println("showwww");
             } else if (source == view.getPreviousViewButton()) {
                 if (view.getViewName().equals("ConnectingView")) {
                     this.menuSettings.setVisible(true);
