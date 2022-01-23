@@ -10,6 +10,8 @@ import java.beans.PropertyChangeListener;
 import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
+import static put.poznan.tools.ConnectionHandler.address;
+
 public class LoadingView extends MyView implements PropertyChangeListener {
 
 
@@ -25,8 +27,11 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     private Thread progressThread;
 
-    private final Semaphore semaphore = new Semaphore(0);
-    private final Semaphore semaphore2 = new Semaphore(0);
+    private final CardLayout cardLayout;
+    private final JPanel cardPane;
+
+    private Semaphore semaphore = new Semaphore(0);
+    private Semaphore semaphore2 = new Semaphore(0);
 
     LoadingView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -81,6 +86,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void onShowAction() {
+        System.out.println("on show start");
+        semaphore = new Semaphore(0);
+        semaphore2 = new Semaphore(0);
 
         System.out.println("inside");
         //#TODO get lobby size from server
@@ -101,7 +109,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
+        this.progressThread.interrupt();
         this.connectionTask.cancel(true);
+        this.connectionTask.removePropertyChangeListener(this);
         this.progressBar.setValue(0);
         this.enter.setVisible(false);
         super.returnToPreviousView(cardLayout, cardPane);
@@ -124,29 +134,27 @@ public class LoadingView extends MyView implements PropertyChangeListener {
             @Override
             public void run() {
                 int progress = 0;
-                for (int i = 0; i < 20; i++) {
-                    progress++;
-                    try {
-                        Thread.sleep(40);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+
+                for (int section = 0; section < 5; section++) {
+                    System.out.println("in for " + section);
+                    for (int i = 0; i < 20; i++) {
+                        progress++;
+                        try {
+                            Thread.sleep(40);
+                        } catch (InterruptedException e) {
+                            System.out.println("2 " + Thread.currentThread().getName());
+                            return;
+                        }
+                        connectionTask.setProgress(progress);
                     }
-                    setProgress(progress);
-                }
-                try {
-                    semaphore2.release();
-                    semaphore.acquire();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                for (int i = 0; i < 20; i++) {
-                    progress++;
                     try {
-                        Thread.sleep(40);
+                        semaphore2.release();
+                        semaphore.acquire();
+
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        System.out.println("1 " + Thread.currentThread().getName());
+                        return;
                     }
-                    setProgress(progress);
                 }
             }
         }
@@ -154,21 +162,38 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         @Override
         protected Void doInBackground() {
             setProgress(0);
-
             progressThread = new Thread(new myThread());
-
             progressThread.start();
 
-            String address = PropertiesHandler.getProperty("serverAddress");
-            System.out.println(address);
-            try {
-                semaphore2.acquire();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            semaphore.release();
 
-            Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
+            for (int i = 0; i < 5; i++) {
+                if (i == 0) {
+                    ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
+                } else if (i == 1) {
+                    ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
+                } else if (i == 2) {
+                    if (!ConnectionHandler.createSocket()) {
+                        returnToPreviousView(cardLayout, cardPane);
+                        System.out.println("returned to previous view");
+                        return null;
+                    }
+                } else if (i == 3) {
+                    String message = ConnectionHandler.getMessage();
+                    System.out.println(message);
+                }
+                try {
+                    semaphore2.acquire();
+                } catch (InterruptedException e) {
+                    //e.printStackTrace();
+                    return null;
+                }
+                semaphore.release();
+
+            }
+
+            System.out.println(address);
+            System.out.println(ConnectionHandler.port);
+
             try {
                 progressThread.join();
             } catch (InterruptedException e) {
