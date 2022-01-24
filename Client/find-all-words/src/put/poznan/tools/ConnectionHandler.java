@@ -34,6 +34,27 @@ public class ConnectionHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return "";
+    }
+
+    public static String sendRequest(String request) {
+        out.print(request);
+        out.flush();
+        try {
+            return in.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    public static void endConnection() {
+        try {
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException | NullPointerException e) {
+            e.printStackTrace();
+        }
     }
 }

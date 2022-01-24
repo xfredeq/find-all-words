@@ -1,5 +1,6 @@
 package put.poznan.GUI;
 
+import put.poznan.tools.ConnectionHandler;
 import put.poznan.tools.MyView;
 
 import javax.swing.*;
@@ -98,6 +99,7 @@ public class LobbyView extends MyView implements ActionListener {
             l.getSelect().setBackground(Color.YELLOW);
         }
         this.join.setVisible(false);
+        ConnectionHandler.endConnection();
 
         super.returnToPreviousView(cardLayout, cardPane);
     }
