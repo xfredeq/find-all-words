@@ -1,5 +1,6 @@
 package put.poznan.GUI;
 
+import put.poznan.tools.ConnectionHandler;
 import put.poznan.tools.MyView;
 import put.poznan.tools.PropertiesHandler;
 
@@ -7,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
 import static put.poznan.tools.ConnectionHandler.address;
@@ -33,8 +33,10 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     private Semaphore semaphore = new Semaphore(0);
     private Semaphore semaphore2 = new Semaphore(0);
 
-    LoadingView() {
+    LoadingView(CardLayout layout, JPanel pane) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.cardLayout = layout;
+        this.cardPane = pane;
         this.setComponents();
         this.addComponents();
     }
@@ -43,6 +45,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         this.viewName = "ConnectingView";
         this.nextViewName = "LobbyView";
         this.previousViewName = "StartView";
+
         this.title = new JLabel("Connecting...");
 
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -114,6 +117,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         this.connectionTask.removePropertyChangeListener(this);
         this.progressBar.setValue(0);
         this.enter.setVisible(false);
+        System.out.println("returning");
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -129,7 +133,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     private class ConnectionTask extends SwingWorker<Void, Void> {
 
         private class myThread implements Runnable {
-
 
             @Override
             public void run() {
@@ -157,6 +160,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     }
                 }
             }
+
         }
 
         @Override
@@ -196,17 +200,26 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             try {
                 progressThread.join();
+                System.out.println("joined");
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                return null;
+
             }
+            System.out.println("returned");
             return null;
         }
 
         @Override
         public void done() {
-            Toolkit.getDefaultToolkit().beep();
-            enter.setVisible(true);
             setCursor(null);
+            System.out.println("done " + connectionTask.getProgress());
+            if (connectionTask.getProgress() == 100) {
+
+                Toolkit.getDefaultToolkit().beep();
+                enter.setVisible(true);
+
+            }
         }
     }
 }

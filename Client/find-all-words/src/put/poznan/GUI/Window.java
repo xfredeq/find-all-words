@@ -21,7 +21,9 @@ public class Window extends JFrame implements ActionListener {
     private ConnectionDialog connectionDialog;
 
     public Window() {
+
         super("FindAllWords");
+        System.out.println("window " + Thread.currentThread().getName());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(new Dimension(1024, 720));
         this.setLocationRelativeTo(null);
@@ -87,7 +89,7 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
-        this.views.add(new LoadingView());
+        this.views.add(new LoadingView(cardLayout, cardPane));
         this.views.add(new LobbyView());
         this.views.add(new VoteView());
         for (var view : this.views) {
@@ -134,9 +136,11 @@ public class Window extends JFrame implements ActionListener {
                         break;
                     }
                 }
+                System.out.println("moooveee");
                 view.moveToNextView(this.cardLayout, this.cardPane);
+                System.out.println("action");
                 nextView.onShowAction();
-                System.out.println("showwww");
+                System.out.println("after action");
             } else if (source == view.getPreviousViewButton()) {
                 if (view.getViewName().equals("ConnectingView")) {
                     this.menuSettings.setVisible(true);
