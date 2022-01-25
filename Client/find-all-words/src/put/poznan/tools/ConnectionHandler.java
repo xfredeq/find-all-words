@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class ConnectionHandler {
     public static int port;
@@ -18,6 +19,7 @@ public class ConnectionHandler {
     public static boolean createSocket() {
         try {
             socket = new Socket(address, port);
+            socket.setSoTimeout(5000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
@@ -42,7 +44,10 @@ public class ConnectionHandler {
         out.flush();
         try {
             return in.readLine();
-        } catch (IOException e) {
+        } catch (SocketTimeoutException t) {
+            return null;
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
         return "";

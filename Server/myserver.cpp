@@ -18,14 +18,15 @@
 #include <sys/epoll.h>
 using namespace std;
 
-class Client;
+class Player;
 
 int lobbySize;
+int lobbyNumber;
 
 int serverSocket;
-int epollFd;
+int mainEpollFd;
 
-unordered_set<Client *> clients;
+unordered_set<Player *> freePlayers;
 
 void stop_server(int);
 int readArgument(char *txt, bool type);
@@ -40,7 +41,7 @@ struct Handler
     virtual void handleEvent(uint32_t events) = 0;
 };
 
-class Client : public Handler
+class Player : public Handler
 {
     int _fd;
     struct Buffer
@@ -69,119 +70,29 @@ class Client : public Handler
     void waitForWrite(bool epollout)
     {
         epoll_event ee{EPOLLIN | EPOLLRDHUP | (epollout ? EPOLLOUT : 0), {.ptr = this}};
-        epoll_ctl(epollFd, EPOLL_CTL_MOD, _fd, &ee);
+        epoll_ctl(mainEpollFd, EPOLL_CTL_MOD, _fd, &ee);
     }
 
 public:
-    Client(int fd) : _fd(fd)
+    Player(int fd) : _fd(fd)
     {
         epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
-        epoll_ctl(epollFd, EPOLL_CTL_ADD, _fd, &ee);
+        epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, _fd, &ee);
     }
-    virtual ~Client()
+    virtual ~Player()
     {
-        epoll_ctl(epollFd, EPOLL_CTL_DEL, _fd, nullptr);
+        epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, _fd, nullptr);
         shutdown(_fd, SHUT_RDWR);
         close(_fd);
     }
     int fd() const { return _fd; }
-    virtual void handleEvent(uint32_t events) override
-    {
-        if (events & EPOLLIN)
-        {
-            ssize_t count = read(_fd, readBuffer.dataPos(), readBuffer.remaining());
-            if (count <= 0)
-                events |= EPOLLERR;
-            else
-            {
-                readBuffer.pos += count;
-                char *eol = (char *)memchr(readBuffer.data, '@', readBuffer.pos);
-                if (eol == nullptr)
-                {
-                    if (0 == readBuffer.remaining())
-                        readBuffer.doube();
-                }
-                else
-                {
-                    do
-                    {
-                        int thismsglen = eol - readBuffer.data + 1;
-                        string s(readBuffer.data, readBuffer.data + thismsglen);
-                        cout << "length: " << thismsglen << endl;
 
-                        cout << "s: " << s << endl;
-                        cout << "buff: " << readBuffer.data << endl;
+    virtual void handleEvent(uint32_t events) override;
 
-                        sendToAllBut(_fd, readBuffer.data, thismsglen);
-                        processRequests(_fd, readBuffer.data, thismsglen);
-                        auto nextmsgslen = readBuffer.pos - thismsglen;
-                        memmove(readBuffer.data, eol + 1, nextmsgslen);
-                        readBuffer.pos = nextmsgslen;
-                    } while ((eol = (char *)memchr(readBuffer.data, '@', readBuffer.pos)));
-                }
-            }
-        }
-        if (events & EPOLLOUT)
-        {
-            do
-            {
-                int remaining = dataToWrite.front().remaining();
-                int sent = send(_fd, dataToWrite.front().data + dataToWrite.front().pos, remaining, MSG_DONTWAIT);
-                if (sent == remaining)
-                {
-                    dataToWrite.pop_front();
-                    if (0 == dataToWrite.size())
-                    {
-                        waitForWrite(false);
-                        break;
-                    }
-                    continue;
-                }
-                else if (sent == -1)
-                {
-                    if (errno != EWOULDBLOCK && errno != EAGAIN)
-                        events |= EPOLLERR;
-                }
-                else
-                    dataToWrite.front().pos += sent;
-            } while (false);
-        }
-        if (events & ~(EPOLLIN | EPOLLOUT))
-        {
-            remove();
-        }
-    }
-    void write(char *buffer, int count)
-    {
-        if (dataToWrite.size() != 0)
-        {
-            dataToWrite.emplace_back(buffer, count);
-            return;
-        }
-        int sent = send(_fd, buffer, count, MSG_DONTWAIT);
-        if (sent == count)
-            return;
-        if (sent == -1)
-        {
-            if (errno != EWOULDBLOCK && errno != EAGAIN)
-            {
-                remove();
-                return;
-            }
-            dataToWrite.emplace_back(buffer, count);
-        }
-        else
-        {
-            dataToWrite.emplace_back(buffer + sent, count - sent);
-        }
-        waitForWrite(true);
-    }
-    void remove()
-    {
-        printf("removing %d\n", _fd);
-        clients.erase(this);
-        delete this;
-    }
+    void write(char *buffer, int count);
+
+    void remove();
+
     void processRequests(int fd, char *buffer, int length);
 };
 
@@ -201,7 +112,7 @@ public:
 
             printf("new connection from: %s:%hu (fd: %d)\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port), clientFd);
 
-            clients.insert(new Client(clientFd));
+            freePlayers.insert(new Player(clientFd));
         }
         if (events & ~EPOLLIN)
         {
@@ -210,6 +121,21 @@ public:
         }
     }
 } serverHandler;
+
+class Lobby
+{
+private:
+    int number;
+    int lobbyEpollFd;
+    unordered_set<Player *> lobbyPlayers;
+
+public:
+    Lobby();
+    ~Lobby();
+
+    void addPlayer(Player *player);
+    void removePlayer(Player *player);
+};
 
 int main(int argc, char **argv)
 {
@@ -239,13 +165,15 @@ int main(int argc, char **argv)
 
     cout << port << " " << lobbySize << " " << serverSocket << endl;
 
-    epollFd = epoll_create1(0);
+    lobbyNumber = 1;
+
+    mainEpollFd = epoll_create1(0);
     epoll_event ee{EPOLLIN, {.ptr = &serverHandler}};
-    epoll_ctl(epollFd, EPOLL_CTL_ADD, serverSocket, &ee);
+    epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, serverSocket, &ee);
 
     while (true)
     {
-        if (-1 == epoll_wait(epollFd, &ee, 1, -1) && errno != EINTR)
+        if (-1 == epoll_wait(mainEpollFd, &ee, 1, -1) && errno != EINTR)
         {
             error(0, errno, "epoll_wait failed");
             stop_server(SIGINT);
@@ -293,7 +221,7 @@ void acceptUsers()
 {
     /*while (true)
     {
-        // prepare placeholders for client address
+        // prepare placeholders for player address
         sockaddr_in clientAddr{0};
         socklen_t clientAddrSize = sizeof(clientAddr);
 
@@ -302,7 +230,7 @@ void acceptUsers()
         if (clientFd == -1)
             error(1, errno, "accept failed");
 
-        // add client to all clients set
+        // add player to all freePlayers set
         clientFds.insert(clientFd);
 
         // tell who has connected
@@ -312,29 +240,73 @@ void acceptUsers()
 
 void sendToAllBut(int fd, char *buffer, int count)
 {
-    auto it = clients.begin();
-    while (it != clients.end())
+    auto it = freePlayers.begin();
+    while (it != freePlayers.end())
     {
-        Client *client = *it;
+        Player *player = *it;
         it++;
-        if (client->fd() != fd)
-            client->write(buffer, count);
+        if (player->fd() != fd)
+            player->write(buffer, count);
     }
+}
+
+void Player::write(char *buffer, int count)
+{
+    if (dataToWrite.size() != 0)
+    {
+        dataToWrite.emplace_back(buffer, count);
+        return;
+    }
+    int sent = send(_fd, buffer, count, MSG_DONTWAIT);
+    if (sent == count)
+        return;
+    if (sent == -1)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
+            remove();
+            return;
+        }
+        dataToWrite.emplace_back(buffer, count);
+    }
+    else
+    {
+        dataToWrite.emplace_back(buffer + sent, count - sent);
+    }
+    waitForWrite(true);
+}
+
+void Player::remove()
+{
+    printf("removing %d\n", _fd);
+    freePlayers.erase(this);
+    delete this;
 }
 
 // "TYP_zadanie_dane_@"
 
-void Client::processRequests(int fd, char *buffer, int length)
+void Player::processRequests(int fd, char *buffer, int length)
 {
     string request(buffer, buffer + length);
     char *type = new char[10];
     char *subType = new char[20];
 
     int index = request.find("_");
+
+    if (index < 1)
+    {
+        return;
+    }
+
     strcpy(type, request.substr(0, index).c_str());
     request = request.substr(index + 1);
 
     index = request.find("_");
+    if (index < 1)
+    {
+        return;
+    }
+
     strcpy(subType, request.substr(0, index).c_str());
     request = request.substr(index);
     if (strcmp("GET", type) == 0)
@@ -351,4 +323,99 @@ void Client::processRequests(int fd, char *buffer, int length)
     else
     {
     }
+}
+
+void Player::handleEvent(uint32_t events)
+{
+    if (events & EPOLLIN)
+    {
+        ssize_t count = read(_fd, readBuffer.dataPos(), readBuffer.remaining());
+        if (count <= 0)
+            events |= EPOLLERR;
+        else
+        {
+            readBuffer.pos += count;
+            char *eol = (char *)memchr(readBuffer.data, '@', readBuffer.pos);
+            if (eol == nullptr)
+            {
+                if (0 == readBuffer.remaining())
+                    readBuffer.doube();
+            }
+            else
+            {
+                do
+                {
+                    int thismsglen = eol - readBuffer.data + 1;
+                    string s(readBuffer.data, readBuffer.data + thismsglen);
+                    cout << "length: " << thismsglen << endl;
+
+                    cout << "s: " << s << endl;
+                    cout << "buff: " << readBuffer.data << endl;
+
+                    sendToAllBut(_fd, readBuffer.data, thismsglen);
+                    processRequests(_fd, readBuffer.data, thismsglen);
+                    auto nextmsgslen = readBuffer.pos - thismsglen;
+                    memmove(readBuffer.data, eol + 1, nextmsgslen);
+                    readBuffer.pos = nextmsgslen;
+                } while ((eol = (char *)memchr(readBuffer.data, '@', readBuffer.pos)));
+            }
+        }
+    }
+    if (events & EPOLLOUT)
+    {
+        do
+        {
+            int remaining = dataToWrite.front().remaining();
+            int sent = send(_fd, dataToWrite.front().data + dataToWrite.front().pos, remaining, MSG_DONTWAIT);
+            if (sent == remaining)
+            {
+                dataToWrite.pop_front();
+                if (0 == dataToWrite.size())
+                {
+                    waitForWrite(false);
+                    break;
+                }
+                continue;
+            }
+            else if (sent == -1)
+            {
+                if (errno != EWOULDBLOCK && errno != EAGAIN)
+                    events |= EPOLLERR;
+            }
+            else
+                dataToWrite.front().pos += sent;
+        } while (false);
+    }
+    if (events & ~(EPOLLIN | EPOLLOUT))
+    {
+        remove();
+    }
+}
+
+Lobby::Lobby()
+{
+    this->lobbyEpollFd = epoll_create1(0);
+    this->number = lobbyNumber++;
+}
+
+Lobby::~Lobby()
+{
+}
+
+void Lobby::addPlayer(Player *player)
+{
+    epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
+    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = player}};
+    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
+
+    this->lobbyPlayers.insert(player);
+}
+
+void Lobby::removePlayer(Player *player)
+{
+    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
+    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = player}};
+    epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
+
+    this->lobbyPlayers.erase(player);
 }

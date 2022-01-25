@@ -147,10 +147,22 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     }
                 } else if (i == 3) {
                     String message = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
+                    if (message == null) {
+                        returnToPreviousView(cardLayout, cardPane);
+                        System.out.println("returned to previous view");
+                        return null;
+                    }
                     if (message.contains("RESPONSE_LOBBYSIZE_")) {
                         PropertiesHandler.setProperty("lobbySize", String.valueOf(message.charAt(message.length() - 1)));
                         PropertiesHandler.saveProperties();
                         System.out.println(message);
+                    }
+                } else {
+                    String message = ConnectionHandler.sendRequest("GET_LOBBYCOUNT_@");
+                    if (message == null) {
+                        returnToPreviousView(cardLayout, cardPane);
+                        System.out.println("returned to previous view");
+                        return null;
                     }
                 }
                 try {
