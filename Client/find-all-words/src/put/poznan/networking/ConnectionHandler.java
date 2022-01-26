@@ -1,4 +1,4 @@
-package put.poznan.tools;
+package put.poznan.networking;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class ConnectionHandler {
             return null;
         }
         catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return "";
     }

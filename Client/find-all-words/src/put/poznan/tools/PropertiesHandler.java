@@ -1,8 +1,6 @@
 package put.poznan.tools;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 public class PropertiesHandler {
@@ -12,7 +10,17 @@ public class PropertiesHandler {
         try {
             configProperties.load(new FileInputStream("Client/find-all-words/resources/config.properties"));
         } catch (IOException e2) {
-            e2.printStackTrace();
+            try {
+                new FileOutputStream("Client/find-all-words/resources/config.properties");
+                configProperties.load(new FileInputStream("Client/find-all-words/resources/config.properties"));
+
+                configProperties.setProperty("defaultPort", "1313");
+                configProperties.setProperty("defaultAddress", "127.0.0.1");
+                configProperties.setProperty("about", "TODO");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         }
         PropertiesHandler.setProperty("serverAddress", PropertiesHandler.getProperty("defaultAddress"));

@@ -19,7 +19,7 @@ public class Lobby extends JPanel {
     private JButton select;
 
 
-    Lobby() {
+    Lobby(String players) {
         //#TODO get lobby nr from server
         this.nr = Lobby.counter;
         Lobby.counter++;
@@ -32,15 +32,15 @@ public class Lobby extends JPanel {
         this.setOpaque(true);
         this.setVisible(true);
 
-        this.setComponents();
+        this.setComponents(players);
         this.addComponents();
     }
 
-    private void setComponents() {
+    private void setComponents(String players) {
 
         this.name = new JLabel("Lobby " + this.nr);
         //#TODO get number of players in lobby
-        this.players = new JLabel("0");
+        this.players = new JLabel(players);
         this.capacity = new JLabel(PropertiesHandler.getProperty("lobbySize"));
 
         this.select = new JButton("select lobby");
@@ -58,6 +58,10 @@ public class Lobby extends JPanel {
 
     public JButton getSelect() {
         return select;
+    }
+
+    public void updatePlayersNumber(String number) {
+        this.players.setText(number);
     }
 
 }

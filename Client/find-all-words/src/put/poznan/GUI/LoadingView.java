@@ -1,6 +1,6 @@
 package put.poznan.GUI;
 
-import put.poznan.tools.ConnectionHandler;
+import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
 import put.poznan.tools.PropertiesHandler;
 
@@ -8,9 +8,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
-import static put.poznan.tools.ConnectionHandler.address;
+import static put.poznan.networking.ConnectionHandler.address;
 
 public class LoadingView extends MyView implements PropertyChangeListener {
 
@@ -146,24 +147,29 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         return null;
                     }
                 } else if (i == 3) {
-                    String message = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
-                    if (message == null) {
+                    String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
+                    if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         System.out.println("returned to previous view");
                         return null;
                     }
-                    if (message.contains("RESPONSE_LOBBYSIZE_")) {
-                        PropertiesHandler.setProperty("lobbySize", String.valueOf(message.charAt(message.length() - 1)));
+                    if (response.contains("RESPONSE_LOBBYSIZE_")) {
+                        String[] split = response.split("_");
+                        PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                         PropertiesHandler.saveProperties();
-                        System.out.println(message);
                     }
                 } else {
-                    String message = ConnectionHandler.sendRequest("GET_LOBBYCOUNT_@");
-                    if (message == null) {
+                    String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
+                    if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         System.out.println("returned to previous view");
                         return null;
                     }
+                    if (response.contains("RESPONSE_LOBBIES_")) {
+                        String[] split = response.split("_");
+                        System.out.println(Arrays.toString(split));
+                    }
+                    System.out.println(response);
                 }
                 try {
                     semaphore2.acquire();
