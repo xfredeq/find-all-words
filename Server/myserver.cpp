@@ -19,6 +19,7 @@
 using namespace std;
 
 class Player;
+class Lobby;
 
 int lobbySize;
 int lobbyNumber;
@@ -27,6 +28,7 @@ int serverSocket;
 int mainEpollFd;
 
 unordered_set<Player *> freePlayers;
+unordered_set<Lobby *> lobbies;
 
 void stop_server(int);
 int readArgument(char *txt, bool type);
@@ -132,6 +134,9 @@ private:
 public:
     Lobby();
     ~Lobby();
+
+    int getNumber();
+    int getPlayersNumber();
 
     void addPlayer(Player *player);
     void removePlayer(Player *player);
@@ -314,14 +319,30 @@ void Player::processRequests(int fd, char *buffer, int length)
         cout << type << endl;
         if (strcmp("LOBBYSIZE", subType) == 0)
         {
-            cout << subType << endl;
             string response = "RESPONSE_LOBBYSIZE_" + to_string(lobbySize) + "\n";
-            cout << response << endl;
+            this->write((char *)response.c_str(), response.length());
+        }
+        else if (strcmp("LOBBIES", subType) == 0)
+        {
+            string response = "RESPONSE_LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
+            for (auto lobby : lobbies)
+            {
+                response += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
+            }
+
+            response += '\n';
             this->write((char *)response.c_str(), response.length());
         }
     }
-    else
+    else if (strcmp("CREATE", type) == 0)
     {
+        if (strcmp("LOBBY", subType) == 0)
+        {
+            lobbies.insert(new Lobby());
+            string response = "RESPONSE_CREATE_LOBBY_SUCCES\n";
+            this->write((char *)response.c_str(), response.length());
+
+        }
     }
 }
 
@@ -419,3 +440,14 @@ void Lobby::removePlayer(Player *player)
 
     this->lobbyPlayers.erase(player);
 }
+
+int Lobby::getNumber()
+{
+    return this->number;
+}
+
+int Lobby::getPlayersNumber()
+{
+    return this->lobbyPlayers.size();
+}
+
