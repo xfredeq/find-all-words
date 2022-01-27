@@ -20,6 +20,10 @@ public abstract class MyView extends JPanel {
         return this.nextViewName;
     }
 
+    public String getPreviousViewName() {
+        return this.previousViewName;
+    }
+
 
     public JButton getNextViewButton() {
         return this.nextViewButton;
@@ -33,8 +37,9 @@ public abstract class MyView extends JPanel {
 
     public abstract void onShowAction();
 
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
         cardLayout.show(cardPane, this.nextViewName);
+        return true;
     }
 
 

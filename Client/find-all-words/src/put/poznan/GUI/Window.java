@@ -92,6 +92,7 @@ public class Window extends JFrame implements ActionListener {
         this.views.add(new LoadingView(cardLayout, cardPane));
         this.views.add(new LobbyView());
         this.views.add(new VoteView());
+        this.views.add(new GameView());
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);
@@ -137,14 +138,24 @@ public class Window extends JFrame implements ActionListener {
                     }
                 }
                 System.out.println("moooveee");
-                view.moveToNextView(this.cardLayout, this.cardPane);
-                System.out.println("action");
-                nextView.onShowAction();
-                System.out.println("after action");
+                if (view.moveToNextView(this.cardLayout, this.cardPane)) {
+                    System.out.println("action");
+                    nextView.onShowAction();
+                    System.out.println("after action");
+                }
             } else if (source == view.getPreviousViewButton()) {
-                if (view.getViewName().equals("ConnectingView")) {
+                MyView previousView = null;
+                if (view.getViewName().equals("ConnectingView") || view.getViewName().equals("LobbyView")) {
                     this.menuSettings.setVisible(true);
                 }
+                view.returnToPreviousView(this.cardLayout, this.cardPane);
+                for (var v : this.views) {
+                    if (view.getPreviousViewName().equals(v.getViewName())) {
+                        previousView = v;
+                        break;
+                    }
+                }
+                previousView.onShowAction();
                 view.returnToPreviousView(this.cardLayout, this.cardPane);
             }
         }

@@ -1,16 +1,22 @@
 package put.poznan.GUI;
 
 import put.poznan.tools.MyView;
+import put.poznan.tools.PropertiesHandler;
 import put.poznan.tools.Tools;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
-public class StartView extends MyView implements ActionListener {
+public class StartView extends MyView implements ActionListener, FocusListener {
 
     private JLabel title;
+
+    private JLabel nicknameLabel;
+    private JTextField nickname;
 
     private JButton connect;
     private JButton exit;
@@ -24,7 +30,7 @@ public class StartView extends MyView implements ActionListener {
 
     private void setComponents() {
         this.viewName = "StartView";
-        this.nextViewName = "ConnectingView";
+        this.nextViewName = "GameView";
         this.title = new JLabel("Find all Words!");
 
 
@@ -34,12 +40,23 @@ public class StartView extends MyView implements ActionListener {
         title.setForeground(Color.RED);
         title.setOpaque(true);
 
+        this.nicknameLabel = new JLabel("nickname:");
+        this.nicknameLabel.setForeground(Color.BLACK);
+        this.nicknameLabel.setFont(new Font("Arial", Font.ITALIC, 20));
+        this.nicknameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        this.nickname = new JTextField();
+        this.nickname.setForeground(Color.BLACK);
+        this.nickname.setFont(new Font("Arial", Font.ITALIC, 20));
+        this.nickname.setMaximumSize(new Dimension(200,40));
+        this.nickname.addFocusListener(this);
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
+        this.connect.addActionListener(this);
         this.nextViewButton = this.connect;
 
         this.exit = Tools.createButton("Exit", Color.RED);
-        exit.addActionListener(this);
+        this.exit.addActionListener(this);
 
     }
 
@@ -49,17 +66,27 @@ public class StartView extends MyView implements ActionListener {
         add(Box.createVerticalGlue());
         add(this.connect);
         add(Box.createVerticalGlue());
+        add(this.nicknameLabel);
+        add(this.nickname);
+        add(Box.createVerticalGlue());
         add(this.exit);
         add(Box.createVerticalGlue());
 
     }
 
-
     @Override
-    public void onShowAction() {
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+        if (this.nickname.getText().length() < 4) {
+            this.nickname.setBackground(Color.RED);
+            return false;
+        } else {
+            PropertiesHandler.setProperty("nickname", this.nickname.getText());
+            PropertiesHandler.saveProperties();
+            cardLayout.show(cardPane, this.nextViewName);
+            return true;
+        }
 
     }
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -69,5 +96,23 @@ public class StartView extends MyView implements ActionListener {
         if (source == this.exit) {
             System.exit(0);
         }
+    }
+
+    @Override
+    public void focusGained(FocusEvent e) {
+        Object source = e.getSource();
+
+        if (source == this.nickname) {
+            this.nickname.setBackground(Color.WHITE);
+        }
+    }
+
+    @Override
+    public void onShowAction() {
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+
     }
 }

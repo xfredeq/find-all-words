@@ -29,7 +29,7 @@ public class VoteView extends MyView implements ActionListener {
 
     private void setComponents() {
         this.viewName = "VoteView";
-        this.nextViewName = "TODO";
+        this.nextViewName = "GameView";
         this.previousViewName = "LobbyView";
         this.title = new JLabel("Voting...");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -58,6 +58,7 @@ public class VoteView extends MyView implements ActionListener {
 
 
         this.vote = new JButton("Vote");
+        this.nextViewButton = this.vote;
         this.cancel = new JButton("cancel");
         this.previousViewButton = this.cancel;
 

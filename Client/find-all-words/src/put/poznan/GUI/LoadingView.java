@@ -37,7 +37,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     }
 
     private void setComponents() {
-        this.viewName = "ConnectingView";
+        this.viewName = "LoadingView";
         this.nextViewName = "LobbyView";
         this.previousViewName = "StartView";
 
@@ -99,9 +99,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     }
 
     @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
         this.enter.setVisible(false);
-        super.moveToNextView(cardLayout, cardPane);
+        return super.moveToNextView(cardLayout, cardPane);
     }
 
     @Override
@@ -143,14 +143,12 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 } else if (i == 2) {
                     if (!ConnectionHandler.createSocket()) {
                         returnToPreviousView(cardLayout, cardPane);
-                        System.out.println("returned to previous view");
                         return null;
                     }
                 } else if (i == 3) {
                     String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
-                        System.out.println("returned to previous view");
                         return null;
                     }
                     if (response.contains("RESPONSE_LOBBYSIZE_")) {
@@ -159,15 +157,16 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         PropertiesHandler.saveProperties();
                     }
                 } else {
-                    String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
+                    String nickname = PropertiesHandler.getProperty("nickname");
+                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname +"_@");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
-                        System.out.println("returned to previous view");
                         return null;
                     }
-                    if (response.contains("RESPONSE_LOBBIES_")) {
+                    if (response.contains("RESPONSE_NICKNAME_")) {
                         String[] split = response.split("_");
-                        System.out.println(Arrays.toString(split));
+                        PropertiesHandler.setProperty("nickname", split[split.length - 1]);
+                        PropertiesHandler.saveProperties();
                     }
                     System.out.println(response);
                 }
@@ -215,7 +214,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 int progress = 0;
 
                 for (int section = 0; section < 5; section++) {
-                    System.out.println("in for " + section);
                     for (int i = 0; i < 20; i++) {
                         progress++;
                         try {

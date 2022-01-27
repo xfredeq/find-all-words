@@ -2,6 +2,7 @@ package put.poznan.GUI;
 
 import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
+import put.poznan.tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,12 +17,13 @@ public class LobbyView extends MyView implements ActionListener {
 
     private Map<String, Lobby> lobbies;
 
-    private ActionListener listener = this;
+    private final ActionListener listener = this;
 
 
     private JPanel buttonPanel;
     private JPanel lobbyPanel;
 
+    private JLabel nickname;
 
     private JButton join;
     private JButton create;
@@ -36,21 +38,22 @@ public class LobbyView extends MyView implements ActionListener {
         this.addComponents();
     }
 
-    /*public static <T> JPanel<T> safe(JPanel[] panels) {
-        return panels == null ? Collections.<T>emptyList() : panels;
-    }*/
-
     private void setComponents() {
         this.viewName = "LobbyView";
         this.nextViewName = "VoteView";
         this.previousViewName = "StartView";
         this.title = new JLabel("Lobbies");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setAlignmentY(Component.TOP_ALIGNMENT);
+        //title.setAlignmentY(Component.TOP_ALIGNMENT);
         title.setFont(new Font("Verdana", Font.BOLD, 80));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.GREEN);
         title.setOpaque(true);
+
+        this.nickname = new JLabel();
+        nickname.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nickname.setFont(new Font("Arial", Font.ITALIC, 25));
+        nickname.setForeground(Color.BLACK);
 
         this.lobbies = new HashMap<>();
 
@@ -85,6 +88,8 @@ public class LobbyView extends MyView implements ActionListener {
     private void addComponents() {
         add(Box.createVerticalGlue());
         add(this.title);
+        //add(Box.createVerticalGlue());
+        add(this.nickname);
         add(Box.createVerticalGlue());
         add(this.lobbyPanel);
         add(Box.createVerticalGlue());
@@ -104,6 +109,8 @@ public class LobbyView extends MyView implements ActionListener {
         }
         this.lobbyPanel.revalidate();
         validate();*/
+        String nick = PropertiesHandler.getProperty("nickname");
+        this.nickname.setText("Hi " + nick + ", join or create the game:");
 
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
@@ -124,12 +131,12 @@ public class LobbyView extends MyView implements ActionListener {
     }
 
     @Override
-    public void moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
         for (Lobby l : this.lobbies.values()) {
             l.getSelect().setBackground(Color.YELLOW);
         }
         this.join.setVisible(false);
-        super.moveToNextView(cardLayout, cardPane);
+        return super.moveToNextView(cardLayout, cardPane);
     }
 
 
@@ -176,13 +183,10 @@ public class LobbyView extends MyView implements ActionListener {
             List<String> split;
             if (response.contains("RESPONSE_LOBBIES_")) {
                 split = new ArrayList<>(List.of(response.split("_")));
-                System.out.println(split);
                 int count = Integer.parseInt(split.get(3));
                 for (int i = 0; i < count; i++) {
                     String number = split.get(5 + 4 * i);
                     String players = split.get(7 + 4 * i);
-
-                    System.out.println(number + "  " + players);
 
                     Lobby lobby = lobbies.get(number);
                     if (lobby != null) {
@@ -195,7 +199,6 @@ public class LobbyView extends MyView implements ActionListener {
                         lobbyPanel.revalidate();
                         validate();
                     }
-                    System.out.println(lobbies);
                 }
 
 

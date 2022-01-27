@@ -40,6 +40,7 @@ public class ConnectionHandler {
     }
 
     public static String sendRequest(String request) {
+        System.out.println("request: " + request);
         out.print(request);
         out.flush();
         try {
