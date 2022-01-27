@@ -46,6 +46,7 @@ struct Handler
 class Player : public Handler
 {
     int _fd;
+    string nickname;
     struct Buffer
     {
         Buffer() { data = (char *)malloc(len); }
@@ -96,6 +97,8 @@ public:
     void remove();
 
     void processRequests(int fd, char *buffer, int length);
+
+    string getNickname();
 };
 
 class : Handler
@@ -288,6 +291,10 @@ void Player::remove()
     delete this;
 }
 
+string Player::getNickname() {
+    return this->nickname;
+}
+
 // "TYP_zadanie_dane_@"
 
 void Player::processRequests(int fd, char *buffer, int length)
@@ -297,9 +304,10 @@ void Player::processRequests(int fd, char *buffer, int length)
     char *subType = new char[20];
 
     int index = request.find("_");
-
     if (index < 1)
     {
+        delete type;
+        delete subType;
         return;
     }
 
@@ -309,12 +317,37 @@ void Player::processRequests(int fd, char *buffer, int length)
     index = request.find("_");
     if (index < 1)
     {
+        delete type;
+        delete subType;
         return;
     }
 
     strcpy(subType, request.substr(0, index).c_str());
-    request = request.substr(index);
-    if (strcmp("GET", type) == 0)
+    request = request.substr(index + 1);
+    if (strcmp("SET", type) == 0)
+    {
+        cout << type << endl;
+        if (strcmp("NICKNAME", subType) == 0)
+        {
+            char *nickname = new char[20];
+
+            index = request.find("_");
+            if (index < 1)
+            {
+                delete nickname;
+                delete type;
+                delete subType;
+                return;
+            }
+
+            strcpy(nickname, request.substr(0, index).c_str());
+            this->nickname = string(nickname);
+
+            string response = "RESPONSE_NICKNAME_" + this->nickname + "\n";
+            this->write((char *)response.c_str(), response.length());
+        }
+    }
+    else if (strcmp("GET", type) == 0)
     {
         cout << type << endl;
         if (strcmp("LOBBYSIZE", subType) == 0)
@@ -341,9 +374,11 @@ void Player::processRequests(int fd, char *buffer, int length)
             lobbies.insert(new Lobby());
             string response = "RESPONSE_CREATE_LOBBY_SUCCES\n";
             this->write((char *)response.c_str(), response.length());
-
         }
     }
+
+    delete type;
+    delete subType;
 }
 
 void Player::handleEvent(uint32_t events)
@@ -450,4 +485,3 @@ int Lobby::getPlayersNumber()
 {
     return this->lobbyPlayers.size();
 }
-
