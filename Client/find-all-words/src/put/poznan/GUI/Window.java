@@ -20,12 +20,34 @@ public class Window extends JFrame implements ActionListener {
 
     private ConnectionDialog connectionDialog;
 
+    public int getWindowWidth() {
+        return windowWidth;
+    }
+
+    public void setWindowWidth(int windowWidth) {
+        this.windowWidth = windowWidth;
+    }
+
+    public int getWindowHeight() {
+        return windowHeight;
+    }
+
+    public void setWindowHeight(int windowHeight) {
+        this.windowHeight = windowHeight;
+    }
+
+    private int windowWidth;
+    private int windowHeight;
+
     public Window() {
+
 
         super("FindAllWords");
         System.out.println("window " + Thread.currentThread().getName());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(new Dimension(1024, 720));
+        this.setWindowWidth(1024);
+        this.setWindowHeight(720);
+        this.setSize(new Dimension(windowWidth, windowHeight));
         this.setLocationRelativeTo(null);
 
 
@@ -160,6 +182,8 @@ public class Window extends JFrame implements ActionListener {
             }
         }
     }
+
+
 
 
 }
