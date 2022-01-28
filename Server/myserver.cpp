@@ -106,6 +106,7 @@ class : Handler
 public:
     virtual void handleEvent(uint32_t events) override
     {
+        cout << "handler" << endl;
         if (events & EPOLLIN)
         {
             sockaddr_in clientAddr{};
@@ -127,7 +128,7 @@ public:
     }
 } serverHandler;
 
-class Lobby
+class Lobby : Handler
 {
 private:
     int number;
@@ -140,6 +141,10 @@ public:
 
     int getNumber();
     int getPlayersNumber();
+
+    void waitForEvents(epoll_event ee);
+
+    virtual void handleEvent(uint32_t events) override;
 
     void addPlayer(Player *player);
     void removePlayer(Player *player);
@@ -187,13 +192,14 @@ int main(int argc, char **argv)
             stop_server(SIGINT);
         }
         ((Handler *)ee.data.ptr)->handleEvent(ee.events);
+        cout << "event" << endl;
     }
 }
 
 void stop_server(int)
 {
-    //for (int clientFd : clientFds)
-    //   close(clientFd);
+    for (auto player : freePlayers)
+        close(player->fd());
     close(serverSocket);
     printf("Closing server\n");
     exit(0);
@@ -291,7 +297,8 @@ void Player::remove()
     delete this;
 }
 
-string Player::getNickname() {
+string Player::getNickname()
+{
     return this->nickname;
 }
 
@@ -371,8 +378,10 @@ void Player::processRequests(int fd, char *buffer, int length)
     {
         if (strcmp("LOBBY", subType) == 0)
         {
-            lobbies.insert(new Lobby());
-            string response = "RESPONSE_CREATE_LOBBY_SUCCES\n";
+            Lobby *lobby = new Lobby();
+            lobbies.insert(lobby);
+            string response = "RESPONSE_CREATE_LOBBY_SUCCES_" + to_string(lobby->getNumber()) + '\n';
+            lobby->addPlayer(this);
             this->write((char *)response.c_str(), response.length());
         }
     }
@@ -383,6 +392,7 @@ void Player::processRequests(int fd, char *buffer, int length)
 
 void Player::handleEvent(uint32_t events)
 {
+    cout << "player" << endl;
     if (events & EPOLLIN)
     {
         ssize_t count = read(_fd, readBuffer.dataPos(), readBuffer.remaining());
@@ -452,18 +462,47 @@ Lobby::Lobby()
 {
     this->lobbyEpollFd = epoll_create1(0);
     this->number = lobbyNumber++;
+
+    epoll_event ee{EPOLLIN, {.fd = mainEpollFd}};
+    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, mainEpollFd, &ee);
+
+    thread waiter(&Lobby::waitForEvents, this, ee);
+    waiter.detach();
 }
 
 Lobby::~Lobby()
 {
 }
 
+void Lobby::waitForEvents(epoll_event ee)
+{
+    while (true)
+    {
+        if (-1 == epoll_wait(this->lobbyEpollFd, &ee, 1, -1) && errno != EINTR)
+        {
+            error(0, errno, "epoll_wait failed");
+            stop_server(SIGINT);
+        }
+        ((Handler *)ee.data.ptr)->handleEvent(ee.events);
+        cout << "event222" << endl;
+    }
+}
+
+void Lobby::handleEvent(uint32_t events)
+{
+    if (events & EPOLLIN)
+    {
+        cout << "lobby event" << endl;
+    }
+}
+
 void Lobby::addPlayer(Player *player)
 {
     epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
-    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = player}};
+    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
     epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
 
+    freePlayers.erase(player);
     this->lobbyPlayers.insert(player);
 }
 
