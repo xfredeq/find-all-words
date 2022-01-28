@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
 import static put.poznan.networking.ConnectionHandler.address;
@@ -151,29 +150,24 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
-                    if (response.contains("RESPONSE_LOBBYSIZE_")) {
-                        String[] split = response.split("_");
-                        PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
-                        PropertiesHandler.saveProperties();
-                    }
+                    String[] split = response.split("_");
+                    PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
+                    PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
-                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname +"_@");
+                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
-                    if (response.contains("RESPONSE_NICKNAME_")) {
-                        String[] split = response.split("_");
-                        PropertiesHandler.setProperty("nickname", split[split.length - 1]);
-                        PropertiesHandler.saveProperties();
-                    }
+                    String[] split = response.split("_");
+                    PropertiesHandler.setProperty("nickname", split[split.length - 1]);
+                    PropertiesHandler.saveProperties();
                     System.out.println(response);
                 }
                 try {
                     semaphore2.acquire();
                 } catch (InterruptedException e) {
-                    //e.printStackTrace();
                     return null;
                 }
                 semaphore.release();
@@ -185,13 +179,10 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             try {
                 progressThread.join();
-                System.out.println("joined");
             } catch (InterruptedException e) {
-                //e.printStackTrace();
                 return null;
 
             }
-            System.out.println("returned");
             return null;
         }
 

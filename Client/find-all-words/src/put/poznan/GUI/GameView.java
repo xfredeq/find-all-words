@@ -69,6 +69,7 @@ public class GameView extends MyView {
         this.submitPanel.add(Box.createVerticalGlue());
 
         this.c.fill = GridBagConstraints.BOTH;
+        this.c.gridwidth = 1;
         this.c.gridheight = 2;
         this.c.weightx = 1;
         this.c.weighty = 2;
@@ -76,16 +77,18 @@ public class GameView extends MyView {
         this.c.gridy = 0;
         this.add(wordsList, this.c);
 
-        this.c.fill = GridBagConstraints.HORIZONTAL;
+        this.c.fill = GridBagConstraints.NONE;
+        this.c.gridwidth = 1;
         this.c.gridheight = 1;
         this.c.weightx = 1;
         this.c.weighty = 1;
-        this.c.gridx = 0;
-        this.c.gridy = 1;
+        this.c.gridx = 1;
+        this.c.gridy = 0;
         this.add(new JPanel(), this.c);
 
 
         this.c.fill = GridBagConstraints.BOTH;
+        this.c.gridwidth = 1;
         this.c.gridheight = 2;
         this.c.weightx = 1;
         this.c.weighty = 2;
@@ -93,7 +96,8 @@ public class GameView extends MyView {
         this.c.gridy = 0;
         this.add(playersList, this.c);
 
-        this.c.fill = GridBagConstraints.HORIZONTAL;
+        this.c.fill = GridBagConstraints.NONE;
+        this.c.gridwidth = 1;
         this.c.gridheight = 1;
         this.c.weightx = 1;
         this.c.weighty = 1;
@@ -104,16 +108,14 @@ public class GameView extends MyView {
         this.c.fill = GridBagConstraints.BOTH;
         this.c.gridwidth = 2;
         this.c.gridheight = 1;
-        this.c.weightx = 2;
+        this.c.weightx = 6;
         this.c.weighty = 1;
         this.c.gridx = 0;
         this.c.gridy = 2;
         this.add(enterPanel, this.c);
 
         this.c.fill = GridBagConstraints.BOTH;
-        this.c.gridwidth = 1;
-        this.c.gridheight = 1;
-        this.c.weightx = 0.5;
+        this.c.weightx = 1;
         this.c.weighty = 1;
         this.c.gridx = 2;
         this.c.gridy = 2;

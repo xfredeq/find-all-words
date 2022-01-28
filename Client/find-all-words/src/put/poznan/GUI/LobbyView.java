@@ -13,13 +13,9 @@ import java.util.List;
 
 public class LobbyView extends MyView implements ActionListener {
 
-    private JLabel title;
-
-    private Map<String, Lobby> lobbies;
-
     private final ActionListener listener = this;
-
-
+    private JLabel title;
+    private Map<String, Lobby> lobbies;
     private JPanel buttonPanel;
     private JPanel lobbyPanel;
 
@@ -114,6 +110,7 @@ public class LobbyView extends MyView implements ActionListener {
 
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
+        System.out.println("updater started");
 
     }
 
@@ -167,7 +164,6 @@ public class LobbyView extends MyView implements ActionListener {
             for (String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
                  !isCancelled() && response != null;
                  response = ConnectionHandler.sendRequest("GET_LOBBIES_@")) {
-
                 publish(response);
                 try {
                     Thread.sleep(3000);
@@ -181,27 +177,23 @@ public class LobbyView extends MyView implements ActionListener {
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
             List<String> split;
-            if (response.contains("RESPONSE_LOBBIES_")) {
-                split = new ArrayList<>(List.of(response.split("_")));
-                int count = Integer.parseInt(split.get(3));
-                for (int i = 0; i < count; i++) {
-                    String number = split.get(5 + 4 * i);
-                    String players = split.get(7 + 4 * i);
+            split = new ArrayList<>(List.of(response.split("_")));
+            int count = Integer.parseInt(split.get(3));
+            for (int i = 0; i < count; i++) {
+                String number = split.get(5 + 4 * i);
+                String players = split.get(7 + 4 * i);
 
-                    Lobby lobby = lobbies.get(number);
-                    if (lobby != null) {
-                        lobby.updatePlayersNumber(players);
-                    } else {
-                        Lobby l = new Lobby(players);
-                        lobbies.put(number, l);
-                        l.getSelect().addActionListener(listener);
-                        lobbyPanel.add(l);
-                        lobbyPanel.revalidate();
-                        validate();
-                    }
+                Lobby lobby = lobbies.get(number);
+                if (lobby != null) {
+                    lobby.updatePlayersNumber(players);
+                } else {
+                    Lobby l = new Lobby(players);
+                    lobbies.put(number, l);
+                    l.getSelect().addActionListener(listener);
+                    lobbyPanel.add(l);
+                    lobbyPanel.revalidate();
+                    validate();
                 }
-
-
             }
         }
     }

@@ -19,7 +19,7 @@ public class ConnectionHandler {
     public static boolean createSocket() {
         try {
             socket = new Socket(address, port);
-            socket.setSoTimeout(5000);
+            socket.setSoTimeout(10_000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
@@ -29,7 +29,7 @@ public class ConnectionHandler {
         return true;
     }
 
-
+    @SuppressWarnings("unused")
     public static String getMessage() {
         try {
             return in.readLine();
@@ -44,14 +44,15 @@ public class ConnectionHandler {
         out.print(request);
         out.flush();
         try {
-            return in.readLine();
-        } catch (SocketTimeoutException t) {
+            String response = in.readLine();
+            System.out.println("response: " + response);
+            while (!validateResponse(request, response)) {
+                response = in.readLine();
+            }
+            return response;
+        } catch (IOException t) {
             return null;
         }
-        catch (IOException e) {
-            //e.printStackTrace();
-        }
-        return "";
     }
 
     public static void endConnection() {
@@ -62,5 +63,22 @@ public class ConnectionHandler {
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean validateResponse(String request, String response) {
+        switch (request) {
+            case "GET_LOBBYSIZE_@":
+                return response.matches("RESPONSE_LOBBYSIZE_[3-9]");
+            case "CREATE_LOBBY_@":
+                return response.matches("RESPONSE_CREATE_LOBBY_SUCCES_[0-9]+");
+            case "GET_LOBBIES_@":
+                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.+");
+            default:
+                if (request.matches("SET_NICKNAME_.{4,}_@")) {
+                    return response.matches("RESPONSE_NICKNAME_.{4,}");
+                }
+        }
+
+        return false;
     }
 }

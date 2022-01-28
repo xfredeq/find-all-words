@@ -64,3 +64,5 @@ hs_err_pid*
 *.out
 *.app
 
+# Java Properties
+*.properties
