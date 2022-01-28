@@ -1,6 +1,7 @@
 package put.poznan.GUI;
 
 import put.poznan.tools.MyView;
+import put.poznan.GUI.Window;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +20,7 @@ public class GameView extends MyView {
 
     private JLabel submitLabel;
 
+
     public GameView() {
         this.setLayout(new GridBagLayout());
         this.c = new GridBagConstraints();
@@ -34,27 +36,31 @@ public class GameView extends MyView {
         this.previousViewName = "LobbyView";
 
         this.wordsList = new JPanel();
-        this.wordsList.setBackground(Color.BLUE);
+        this.wordsList.setBackground(Color.RED);
+        this.wordsList.setMaximumSize(new Dimension(180, 40));
+        this.wordsList.setPreferredSize(new Dimension(80, 40));
 
         this.playersList = new JPanel();
-        this.playersList.setBackground(Color.YELLOW);
+        this.playersList.setBackground(Color.GREEN);
 
         this.enterPanel = new JPanel();
-        this.enterPanel.setBackground(Color.GREEN);
+        this.enterPanel.setBackground(Color.BLUE);
 
 
         this.submitPanel = new JPanel();
-        this.submitPanel.setBackground(Color.RED);
+        this.submitPanel.setBackground(Color.YELLOW);
         this.submitPanel.setLayout(new BoxLayout(this.submitPanel, BoxLayout.Y_AXIS));
 
         this.submit = new JButton("Submit");
         this.submit.setAlignmentX(Component.CENTER_ALIGNMENT);
-        this.submit.setMaximumSize(new Dimension(120, 60));
-        this.submit.setPreferredSize(new Dimension(120, 60));
+        this.submit.setMaximumSize(new Dimension(80, 40));
+        this.submit.setPreferredSize(new Dimension(80, 40));
 
         this.submitLabel = new JLabel("Submit the word!");
         this.submitLabel.setAlignmentX(Box.CENTER_ALIGNMENT);
-        this.submitLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        this.submitLabel.setMaximumSize(new Dimension(180, 40));
+        this.submitLabel.setPreferredSize(new Dimension(80, 40));
+        this.submitLabel.setFont(new Font("Arial", Font.BOLD, 20));
         this.submitLabel.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         this.submitLabel.setOpaque(true);
     }
