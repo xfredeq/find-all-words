@@ -1,6 +1,6 @@
 <h1>Find all words game</h1>
 
-<h3>Online game based on Client-Server architecture, using POSIX BSD WebSockets, for networking classes on Poznań University of Technology</h3>
+<h3>Online game based on Client-Server architecture, using POSIX BSD Sockets, for networking classes on Poznań University of Technology</h3>
 
 <hr>
 
