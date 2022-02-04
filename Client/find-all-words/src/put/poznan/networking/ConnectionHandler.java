@@ -8,8 +8,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 public class ConnectionHandler {
-    public static int port;
-    public static String address;
+    public static int port = 1313;
+    public static String address = "localhost";
     public static Socket socket;
 
     private static PrintWriter out;
@@ -19,7 +19,7 @@ public class ConnectionHandler {
     public static boolean createSocket() {
         try {
             socket = new Socket(address, port);
-            socket.setSoTimeout(10_000);
+            socket.setSoTimeout(100_000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
@@ -55,6 +55,8 @@ public class ConnectionHandler {
         }
     }
 
+
+
     public static void endConnection() {
         try {
             in.close();
@@ -72,7 +74,11 @@ public class ConnectionHandler {
             case "CREATE_LOBBY_@":
                 return response.matches("RESPONSE_CREATE_LOBBY_SUCCES_[0-9]+");
             case "GET_LOBBIES_@":
-                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.+");
+                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.*");
+            case "GET_PLAYERS_@":
+                return response.matches("RESPONSE_PLAYERS_COUNT_[1-9]_.{4,}_.+");
+            case "word":
+                return true;
             default:
                 if (request.matches("SET_NICKNAME_.{4,}_@")) {
                     return response.matches("RESPONSE_NICKNAME_.{4,}");

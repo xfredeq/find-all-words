@@ -373,6 +373,11 @@ void Player::processRequests(int fd, char *buffer, int length)
             response += '\n';
             this->write((char *)response.c_str(), response.length());
         }
+        else if(strcmp("PLAYERS", subType) == 0)
+        {
+            string response = "RESPONSE_PLAYERS_COUNT_2_MATI_RED_SEBA_GREEN_\n";
+            this->write((char *)response.c_str(), response.length());
+        }
     }
     else if (strcmp("CREATE", type) == 0)
     {
@@ -385,6 +390,7 @@ void Player::processRequests(int fd, char *buffer, int length)
             this->write((char *)response.c_str(), response.length());
         }
     }
+
 
     delete type;
     delete subType;
@@ -463,11 +469,11 @@ Lobby::Lobby()
     this->lobbyEpollFd = epoll_create1(0);
     this->number = lobbyNumber++;
 
-    epoll_event ee{EPOLLIN, {.fd = mainEpollFd}};
+    /*epoll_event ee{EPOLLIN, {.fd = mainEpollFd}};
     epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, mainEpollFd, &ee);
 
     thread waiter(&Lobby::waitForEvents, this, ee);
-    waiter.detach();
+    waiter.detach();*/
 }
 
 Lobby::~Lobby()
@@ -498,9 +504,9 @@ void Lobby::handleEvent(uint32_t events)
 
 void Lobby::addPlayer(Player *player)
 {
-    epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
+    /*epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
     epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
-    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
+    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);*/
 
     freePlayers.erase(player);
     this->lobbyPlayers.insert(player);
