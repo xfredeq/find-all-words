@@ -164,6 +164,7 @@ public class LobbyView extends MyView implements ActionListener {
             for (String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
                  !isCancelled() && response != null;
                  response = ConnectionHandler.sendRequest("GET_LOBBIES_@")) {
+                System.out.println("in forr");
                 publish(response);
                 try {
                     Thread.sleep(3000);

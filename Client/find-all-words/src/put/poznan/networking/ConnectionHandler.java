@@ -1,5 +1,6 @@
 package put.poznan.networking;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -72,13 +73,12 @@ public class ConnectionHandler {
             case "CREATE_LOBBY_@":
                 return response.matches("RESPONSE_CREATE_LOBBY_SUCCES_[0-9]+");
             case "GET_LOBBIES_@":
-                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.+");
+                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.*");
             default:
                 if (request.matches("SET_NICKNAME_.{4,}_@")) {
                     return response.matches("RESPONSE_NICKNAME_.{4,}");
                 }
         }
-
         return false;
     }
 }

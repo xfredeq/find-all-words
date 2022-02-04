@@ -35,7 +35,31 @@ int readArgument(char *txt, bool type);
 void setReuseAddr(int sock);
 void acceptUsers();
 
+void resetOneshot(int epollFd, Player *player);
+
 void sendToAllBut(int fd, char *buffer, int count);
+
+struct Buffer
+{
+    Buffer() { data = (char *)malloc(len); }
+    Buffer(const char *srcData, ssize_t srcLen) : len(srcLen)
+    {
+        data = (char *)malloc(len);
+        memcpy(data, srcData, len);
+    }
+    ~Buffer() { free(data); }
+    Buffer(const Buffer &) = delete;
+    void doube()
+    {
+        len *= 2;
+        data = (char *)realloc(data, len);
+    }
+    ssize_t remaining() { return len - pos; }
+    char *dataPos() { return data + pos; }
+    char *data;
+    ssize_t len = 32;
+    ssize_t pos = 0;
+};
 
 struct Handler
 {
@@ -46,30 +70,18 @@ struct Handler
 class Player : public Handler
 {
     int _fd;
+    int playerEpollFd;
     string nickname;
-    struct Buffer
-    {
-        Buffer() { data = (char *)malloc(len); }
-        Buffer(const char *srcData, ssize_t srcLen) : len(srcLen)
-        {
-            data = (char *)malloc(len);
-            memcpy(data, srcData, len);
-        }
-        ~Buffer() { free(data); }
-        Buffer(const Buffer &) = delete;
-        void doube()
-        {
-            len *= 2;
-            data = (char *)realloc(data, len);
-        }
-        ssize_t remaining() { return len - pos; }
-        char *dataPos() { return data + pos; }
-        char *data;
-        ssize_t len = 32;
-        ssize_t pos = 0;
-    };
+
+    bool inLobby;
+
     Buffer readBuffer;
-    std::list<Buffer> dataToWrite;
+    list<Buffer> dataToWrite;
+
+    thread handlingThread;
+
+    Lobby *lobby;
+
     void waitForWrite(bool epollout)
     {
         epoll_event ee{EPOLLIN | EPOLLRDHUP | (epollout ? EPOLLOUT : 0), {.ptr = this}};
@@ -77,18 +89,26 @@ class Player : public Handler
     }
 
 public:
-    Player(int fd) : _fd(fd)
+    Player(int fd) : _fd(fd), handlingThread()
     {
-        epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
-        epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, _fd, &ee);
+        epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, _fd, nullptr);
+
+        this->playerEpollFd = epoll_create1(0);
+        this->inLobby = false;
     }
     virtual ~Player()
     {
+        this->handlingThread.detach();
+        this->handlingThread.~thread();
         epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, _fd, nullptr);
         shutdown(_fd, SHUT_RDWR);
         close(_fd);
     }
     int fd() const { return _fd; }
+
+    void waitForEvents();
+
+    void startHandler();
 
     virtual void handleEvent(uint32_t events) override;
 
@@ -99,6 +119,8 @@ public:
     void processRequests(int fd, char *buffer, int length);
 
     string getNickname();
+
+    void changeLobbyState();
 };
 
 class : Handler
@@ -118,7 +140,9 @@ public:
 
             printf("new connection from: %s:%hu (fd: %d)\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port), clientFd);
 
-            freePlayers.insert(new Player(clientFd));
+            Player *player = new Player(clientFd);
+            player->startHandler();
+            freePlayers.insert(player);
         }
         if (events & ~EPOLLIN)
         {
@@ -128,12 +152,20 @@ public:
     }
 } serverHandler;
 
-class Lobby : Handler
+class Lobby
 {
 private:
     int number;
     int lobbyEpollFd;
     unordered_set<Player *> lobbyPlayers;
+
+    Buffer readBuffer;
+    std::list<Buffer> dataToWrite;
+    void waitForWrite(bool epollout, int fd)
+    {
+        epoll_event ee{EPOLLIN | EPOLLRDHUP | (epollout ? EPOLLOUT : 0), {.fd = fd}};
+        epoll_ctl(mainEpollFd, EPOLL_CTL_MOD, fd, &ee);
+    }
 
 public:
     Lobby();
@@ -142,9 +174,9 @@ public:
     int getNumber();
     int getPlayersNumber();
 
-    void waitForEvents(epoll_event ee);
+    void waitForEvents();
 
-    virtual void handleEvent(uint32_t events) override;
+    void handleEvent(epoll_event ee);
 
     void addPlayer(Player *player);
     void removePlayer(Player *player);
@@ -181,6 +213,7 @@ int main(int argc, char **argv)
     lobbyNumber = 1;
 
     mainEpollFd = epoll_create1(0);
+    cout << "main epoll: " << mainEpollFd << endl;
     epoll_event ee{EPOLLIN, {.ptr = &serverHandler}};
     epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, serverSocket, &ee);
 
@@ -191,7 +224,10 @@ int main(int argc, char **argv)
             error(0, errno, "epoll_wait failed");
             stop_server(SIGINT);
         }
-        ((Handler *)ee.data.ptr)->handleEvent(ee.events);
+        if (ee.data.ptr == &serverHandler)
+        {
+            ((Handler *)ee.data.ptr)->handleEvent(ee.events);
+        }
         cout << "event" << endl;
     }
 }
@@ -229,27 +265,6 @@ int readArgument(char *txt, bool type)
     if (*ptr != 0 || arg < 2 || (arg > 8))
         error(1, 0, "illegal argument %s", txt);
     return arg;
-}
-
-void acceptUsers()
-{
-    /*while (true)
-    {
-        // prepare placeholders for player address
-        sockaddr_in clientAddr{0};
-        socklen_t clientAddrSize = sizeof(clientAddr);
-
-        // accept new connection
-        auto clientFd = accept(serverSocket, (sockaddr *)&clientAddr, &clientAddrSize);
-        if (clientFd == -1)
-            error(1, errno, "accept failed");
-
-        // add player to all freePlayers set
-        clientFds.insert(clientFd);
-
-        // tell who has connected
-        printf("new connection from: %s:%hu (fd: %d)\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port), clientFd);
-    } */
 }
 
 void sendToAllBut(int fd, char *buffer, int count)
@@ -302,97 +317,41 @@ string Player::getNickname()
     return this->nickname;
 }
 
-// "TYP_zadanie_dane_@"
-
-void Player::processRequests(int fd, char *buffer, int length)
+void Player::changeLobbyState()
 {
-    string request(buffer, buffer + length);
-    char *type = new char[10];
-    char *subType = new char[20];
+    this->inLobby = !this->inLobby;
+}
 
-    int index = request.find("_");
-    if (index < 1)
+void Player::waitForEvents()
+{
+    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
+    epoll_ctl(this->playerEpollFd, EPOLL_CTL_ADD, _fd, &ee);
+
+    while (true)
     {
-        delete type;
-        delete subType;
-        return;
-    }
-
-    strcpy(type, request.substr(0, index).c_str());
-    request = request.substr(index + 1);
-
-    index = request.find("_");
-    if (index < 1)
-    {
-        delete type;
-        delete subType;
-        return;
-    }
-
-    strcpy(subType, request.substr(0, index).c_str());
-    request = request.substr(index + 1);
-    if (strcmp("SET", type) == 0)
-    {
-        cout << type << endl;
-        if (strcmp("NICKNAME", subType) == 0)
+        if (-1 == epoll_wait(this->playerEpollFd, &ee, 1, -1) && errno != EINTR)
         {
-            char *nickname = new char[20];
-
-            index = request.find("_");
-            if (index < 1)
-            {
-                delete nickname;
-                delete type;
-                delete subType;
-                return;
-            }
-
-            strcpy(nickname, request.substr(0, index).c_str());
-            this->nickname = string(nickname);
-
-            string response = "RESPONSE_NICKNAME_" + this->nickname + "\n";
-            this->write((char *)response.c_str(), response.length());
+            return;
         }
-    }
-    else if (strcmp("GET", type) == 0)
-    {
-        cout << type << endl;
-        if (strcmp("LOBBYSIZE", subType) == 0)
+
+        if (ee.data.ptr == this)
         {
-            string response = "RESPONSE_LOBBYSIZE_" + to_string(lobbySize) + "\n";
-            this->write((char *)response.c_str(), response.length());
+            cout << "player waiter" << endl;
+            ((Handler *)ee.data.ptr)->handleEvent(ee.events);
         }
-        else if (strcmp("LOBBIES", subType) == 0)
-        {
-            string response = "RESPONSE_LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
-            for (auto lobby : lobbies)
-            {
-                response += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
-            }
-
-            response += '\n';
-            this->write((char *)response.c_str(), response.length());
-        }
+        cout << " player event" << endl;
     }
-    else if (strcmp("CREATE", type) == 0)
-    {
-        if (strcmp("LOBBY", subType) == 0)
-        {
-            Lobby *lobby = new Lobby();
-            lobbies.insert(lobby);
-            string response = "RESPONSE_CREATE_LOBBY_SUCCES_" + to_string(lobby->getNumber()) + '\n';
-            lobby->addPlayer(this);
-            this->write((char *)response.c_str(), response.length());
-        }
-    }
+}
 
-    delete type;
-    delete subType;
+void Player::startHandler()
+{
+    handlingThread = thread(&Player::waitForEvents, this);
 }
 
 void Player::handleEvent(uint32_t events)
 {
     cout << "player" << endl;
+
     if (events & EPOLLIN)
     {
         ssize_t count = read(_fd, readBuffer.dataPos(), readBuffer.remaining());
@@ -413,13 +372,11 @@ void Player::handleEvent(uint32_t events)
                 {
                     int thismsglen = eol - readBuffer.data + 1;
                     string s(readBuffer.data, readBuffer.data + thismsglen);
-                    cout << "length: " << thismsglen << endl;
 
                     cout << "s: " << s << endl;
-                    cout << "buff: " << readBuffer.data << endl;
 
-                    sendToAllBut(_fd, readBuffer.data, thismsglen);
                     processRequests(_fd, readBuffer.data, thismsglen);
+
                     auto nextmsgslen = readBuffer.pos - thismsglen;
                     memmove(readBuffer.data, eol + 1, nextmsgslen);
                     readBuffer.pos = nextmsgslen;
@@ -458,61 +415,149 @@ void Player::handleEvent(uint32_t events)
     }
 }
 
+void Player::processRequests(int fd, char *buffer, int length)
+{
+    // "TYP_zadanie_dane_@"
+
+    string request(buffer, buffer + length);
+    char *type = new char[10];
+    char *subType = new char[20];
+
+    int index = request.find("_");
+    if (index < 1)
+    {
+        delete type;
+        delete subType;
+        return;
+    }
+
+    strcpy(type, request.substr(0, index).c_str());
+    request = request.substr(index + 1);
+
+    index = request.find("_");
+    if (index < 1)
+    {
+        delete type;
+        delete subType;
+        return;
+    }
+
+    strcpy(subType, request.substr(0, index).c_str());
+    request = request.substr(index + 1);
+
+    if (!this->inLobby)
+    {
+        if (strcmp("SET", type) == 0)
+        {
+            cout << type << endl;
+            if (strcmp("NICKNAME", subType) == 0)
+            {
+                char *nickname = new char[20];
+
+                index = request.find("_");
+                if (index < 1)
+                {
+                    delete nickname;
+                    delete type;
+                    delete subType;
+                    return;
+                }
+
+                strcpy(nickname, request.substr(0, index).c_str());
+                this->nickname = string(nickname);
+
+                string response = "RESPONSE_NICKNAME_" + this->nickname + "\n";
+                this->write((char *)response.c_str(), response.length());
+            }
+        }
+        else if (strcmp("GET", type) == 0)
+        {
+            cout << type << endl;
+            if (strcmp("LOBBYSIZE", subType) == 0)
+            {
+                string response = "RESPONSE_LOBBYSIZE_" + to_string(lobbySize) + "\n";
+                this->write((char *)response.c_str(), response.length());
+            }
+            else if (strcmp("LOBBIES", subType) == 0)
+            {
+                string response = "RESPONSE_LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
+                for (auto lobby : lobbies)
+                {
+                    response += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
+                }
+
+                if (lobbies.size() == 0)
+                {
+                    response += "null";
+                }
+
+                response += '\n';
+                this->write((char *)response.c_str(), response.length());
+            }
+        }
+        else if (strcmp("CREATE", type) == 0)
+        {
+            if (strcmp("LOBBY", subType) == 0)
+            {
+                Lobby *lobby = new Lobby();
+                lobbies.insert(lobby);
+                string response = "RESPONSE_CREATE_LOBBY_SUCCES_" + to_string(lobby->getNumber()) + '\n';
+
+                this->write((char *)response.c_str(), response.length());
+
+                lobby->addPlayer(this);
+            }
+        }
+    }
+    else
+    {
+        if (strcmp("SUBMIT", type) == 0)
+        {
+            cout << type << endl;
+            if (strcmp("WORD", subType) == 0)
+            {
+                string response = "RESPONSE_SUBMIT_WORD_SUCCES_\n";
+                this->write((char *)response.c_str(), response.length());
+            }
+        }
+        else if (strcmp("LEAVE", type) == 0)
+        {
+            cout << type << endl;
+            if (strcmp("LOBBY", subType) == 0)
+            {
+                string response = "RESPONSE_SUBMIT_WORD_SUCCES_\n";
+                this->lobby->removePlayer(this);
+                this->write((char *)response.c_str(), response.length());
+            }
+        }
+        }
+
+    delete type;
+    delete subType;
+}
+
 Lobby::Lobby()
 {
     this->lobbyEpollFd = epoll_create1(0);
     this->number = lobbyNumber++;
-
-    epoll_event ee{EPOLLIN, {.fd = mainEpollFd}};
-    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, mainEpollFd, &ee);
-
-    thread waiter(&Lobby::waitForEvents, this, ee);
-    waiter.detach();
 }
 
 Lobby::~Lobby()
 {
 }
 
-void Lobby::waitForEvents(epoll_event ee)
-{
-    while (true)
-    {
-        if (-1 == epoll_wait(this->lobbyEpollFd, &ee, 1, -1) && errno != EINTR)
-        {
-            error(0, errno, "epoll_wait failed");
-            stop_server(SIGINT);
-        }
-        ((Handler *)ee.data.ptr)->handleEvent(ee.events);
-        cout << "event222" << endl;
-    }
-}
-
-void Lobby::handleEvent(uint32_t events)
-{
-    if (events & EPOLLIN)
-    {
-        cout << "lobby event" << endl;
-    }
-}
-
 void Lobby::addPlayer(Player *player)
 {
-    epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
-    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
-    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
-
+    player->changeLobbyState();
     freePlayers.erase(player);
     this->lobbyPlayers.insert(player);
 }
 
 void Lobby::removePlayer(Player *player)
 {
-    epoll_ctl(this->lobbyEpollFd, EPOLL_CTL_DEL, player->fd(), nullptr);
-    epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = player}};
-    epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, player->fd(), &ee);
-
+    player->changeLobbyState();
     this->lobbyPlayers.erase(player);
+    freePlayers.insert(player);
 }
 
 int Lobby::getNumber()
