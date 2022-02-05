@@ -148,49 +148,27 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     }
                     ConnectionHandler.readMessages();
                 } else if (i == 3) {
-                    /*String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
-                    if (response == null) {
-                        returnToPreviousView(cardLayout, cardPane);
-                        return null;
-                    }*/
-                    ConnectionHandler.send("GET_LOBBYSIZE_@");
-                    String response = "";
-                    Object lock = ConnectionHandler.responseTable.get("lobbySize").lock;
-                    synchronized (lock) {
-                        try {
-                            lock.wait();
-                            response = ConnectionHandler.responseTable.get("lobbySize").response;
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    String response = ConnectionHandler.sendRequest2("GET_LOBBYSIZE_@", "lobbySize");
+
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
-                    //String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@");
-                    ConnectionHandler.send("SET_NICKNAME_" + nickname + "_@");
-                    String response = "";
-                    Object lock = ConnectionHandler.responseTable.get("nickname").lock;
-                    synchronized (lock) {
-                        try {
-                            lock.wait();
-                            response = ConnectionHandler.responseTable.get("nickname").response;
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    String response = ConnectionHandler.sendRequest2("SET_NICKNAME_" + nickname + "_@", "nickname");
 
 
-                    if (response == null) {
+                    String[] split = response.split("_");
+
+                    if ("SUCCESS".equals(split[split.length - 2])) {
+                        PropertiesHandler.setProperty("nickname", split[split.length - 1]);
+                        PropertiesHandler.saveProperties();
+                        System.out.println(response);
+                    } else {
+                        System.out.println("NOT UNIQUE NICK");
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
-                    String[] split = response.split("_");
-                    PropertiesHandler.setProperty("nickname", split[split.length - 1]);
-                    PropertiesHandler.saveProperties();
-                    System.out.println(response);
                 }
                 try {
                     semaphore2.acquire();
@@ -205,7 +183,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
             System.out.println(ConnectionHandler.port);
 
             try {
-                if (progressThread.isAlive()){
+                if (progressThread.isAlive()) {
                     progressThread.join();
                 }
             } catch (InterruptedException e) {

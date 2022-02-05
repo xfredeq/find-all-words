@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.security.KeyPair;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +38,12 @@ public class ConnectionHandler {
     public static void initializeTable() {
         responseTable = new HashMap<>();
         responseTable.put("lobbySize", new Triplet("RESPONSE_LOBBYSIZE_[3-9]"));
-        responseTable.put("nickname", new Triplet("RESPONSE_NICKNAME_.{4,}"));
+        responseTable.put("nickname", new Triplet("RESPONSE_NICKNAME_.{7}_.*"));
+        responseTable.put("lobbiesEntry", new Triplet("RESPONSE_LOBBIES_COUNT_[0-9]+_.*"));
+        responseTable.put("lobbies", new Triplet("NOTIFICATION_LOBBIES_COUNT_[0-9]+_.*"));
+        responseTable.put("lobbyJoin", new Triplet("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+"));
+        responseTable.put("lobbyCreate", new Triplet("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
+        responseTable.put("lobbyLeave", new Triplet("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
     }
 
     @SuppressWarnings("unused")
@@ -95,9 +99,9 @@ public class ConnectionHandler {
                 return response.matches("RESPONSE_LOBBY_LEAVE_SUCCESS");
             default:
                 if (request.matches("SET_NICKNAME_.{4,}_@")) {
-                    return response.matches("RESPONSE_NICKNAME_.{4,}");
+                    return response.matches("RESPONSE_NICKNAME_.{7}_.*");
                 } else if (request.matches("LOBBY_JOIN_[1-9]+_@")) {
-                    return response.matches("RESPONSE_LOBBY_JOIN_[1-9]+_SUCCESS");
+                    return response.matches("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+");
                 }
         }
         return false;
@@ -111,9 +115,20 @@ public class ConnectionHandler {
         messageGetter.cancel(true);
     }
 
-    public static void send(String m) {
-        out.print(m);
+    public static String sendRequest2(String request, String type) {
+        out.print(request);
         out.flush();
+        Object lock = ConnectionHandler.responseTable.get(type).lock;
+        synchronized (lock) {
+            try {
+                lock.wait();
+                return ConnectionHandler.responseTable.get(type).response;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
     }
 
     private static class MessageGetter extends SwingWorker<Void, Void> {
@@ -123,21 +138,17 @@ public class ConnectionHandler {
             System.out.println("reader started");
             while (!isCancelled()) {
                 try {
-                    String m = in.readLine();
-                    System.out.println("response in bg: " + m);
-
+                    String message = in.readLine();
                     for (Map.Entry<String, Triplet> entry : responseTable.entrySet()) {
-                        System.out.println("keyyy: " + entry.getKey());
                         Triplet triplet = entry.getValue();
-                        if (m.matches(triplet.regex)) {
+                        if (message.matches(triplet.regex)) {
                             synchronized (triplet.lock) {
-                                triplet.response = m;
+                                triplet.response = message;
                                 triplet.lock.notifyAll();
                             }
                             break;
                         }
                     }
-
                 } catch (IOException e) {
                     //e.printStackTrace();
                 }

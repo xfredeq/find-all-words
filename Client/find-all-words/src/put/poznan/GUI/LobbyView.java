@@ -69,7 +69,7 @@ public class LobbyView extends MyView implements ActionListener {
         this.create = new JButton("Create lobby");
         this.create.addActionListener(this);
 
-        this.cancel = new JButton("cancel");
+        this.cancel = new JButton("Leave game");
         this.previousViewButton = this.cancel;
 
         this.buttonPanel = new JPanel();
@@ -103,6 +103,8 @@ public class LobbyView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
+        this.lobbies.clear();
+        this.lobbyPanel.removeAll();
         this.selectedLobby = null;
 
         for (Lobby l : this.lobbies.values()) {
@@ -133,11 +135,18 @@ public class LobbyView extends MyView implements ActionListener {
         this.updater.cancel(true);
 
         int nr = this.selectedLobby.getNumber();
-        String response = ConnectionHandler.sendRequest("LOBBY_JOIN_" + nr + "_@");
-        System.out.println(response);
+        String response = ConnectionHandler.sendRequest2(
+                "LOBBY_JOIN_" + nr + "_@", "lobbyJoin");
 
+        String[] split = response.split("_");
+        System.out.println(Arrays.toString(split));
+        if ("SUCCESS".equals(split[split.length - 2])) {
+            return super.moveToNextView(cardLayout, cardPane);
+        } else {
+            System.out.println("LOBBY JOIN FAILURE");
+            return false;
+        }
 
-        return super.moveToNextView(cardLayout, cardPane);
     }
 
 
@@ -157,11 +166,17 @@ public class LobbyView extends MyView implements ActionListener {
 
         if (source == this.create) {
             this.updater.cancel(true);
-            String response = ConnectionHandler.sendRequest("LOBBY_CREATE_@");
-            System.out.println(Arrays.toString(response.split("_")));
+            String response = ConnectionHandler.sendRequest2(
+                    "LOBBY_CREATE_@", "lobbyCreate");
+            String[] split = response.split("_");
+            System.out.println(Arrays.toString(split));
+            if ("SUCCESS".equals(split[split.length - 2])) {
+                cardLayout.show(cardPane, this.nextViewName);
+            } else {
+                System.out.println("LOBBY CREATE FAILURE");
+            }
 
 
-            cardLayout.show(cardPane, this.nextViewName);
         }
     }
 
@@ -170,16 +185,19 @@ public class LobbyView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            for (String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
-                 !isCancelled() && response != null;
-                 response = ConnectionHandler.sendRequest("GET_LOBBIES_@")) {
-                System.out.println("in forr");
-                if (!"RESPONSE_BAD_REQUEST".equals(response)) {
-                    publish(response);
-                }
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignore) {
+
+            publish(ConnectionHandler.sendRequest2("GET_LOBBIES_@", "lobbiesEntry"));
+
+            while (!isCancelled()) {
+                Object lock = ConnectionHandler.responseTable.get("lobbies").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                       publish(ConnectionHandler.responseTable.get("lobbies").response);
+                    } catch (InterruptedException e) {
+                        //e.printStackTrace();
+                        return null;
+                    }
                 }
             }
             return null;
@@ -191,21 +209,21 @@ public class LobbyView extends MyView implements ActionListener {
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
             int count = Integer.parseInt(split.get(3));
+            lobbies.clear();
+            lobbyPanel.removeAll();
+            lobbyPanel.revalidate();
+            validate();
             for (int i = 0; i < count; i++) {
                 String number = split.get(5 + 4 * i);
                 String players = split.get(7 + 4 * i);
 
-                Lobby lobby = lobbies.get(number);
-                if (lobby != null) {
-                    lobby.updatePlayersNumber(players);
-                } else {
-                    Lobby l = new Lobby(players);
-                    lobbies.put(number, l);
-                    l.getSelect().addActionListener(listener);
-                    lobbyPanel.add(l);
-                    lobbyPanel.revalidate();
-                    validate();
-                }
+                Lobby l = new Lobby(number, players);
+                lobbies.put(number, l);
+                l.getSelect().addActionListener(listener);
+                lobbyPanel.add(l);
+                lobbyPanel.revalidate();
+                validate();
+
             }
         }
     }

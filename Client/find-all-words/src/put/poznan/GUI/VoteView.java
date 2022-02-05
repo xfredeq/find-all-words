@@ -33,7 +33,7 @@ public class VoteView extends MyView implements ActionListener {
         this.viewName = "VoteView";
         this.nextViewName = "GameView";
         this.previousViewName = "LobbyView";
-        this.title = new JLabel("Voting...");
+        this.title = new JLabel("Vote to start the game");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         title.setFont(new Font("Verdana", Font.BOLD, 80));
@@ -61,7 +61,7 @@ public class VoteView extends MyView implements ActionListener {
 
         this.vote = new JButton("Vote");
         this.nextViewButton = this.vote;
-        this.cancel = new JButton("cancel");
+        this.cancel = new JButton("leave lobby");
         this.previousViewButton = this.cancel;
 
         this.buttonPanel = new JPanel();
@@ -95,7 +95,7 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@");
+        String response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
         System.out.println(Arrays.toString(response.split("_")));
         super.returnToPreviousView(cardLayout, cardPane);
     }

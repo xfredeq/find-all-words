@@ -7,7 +7,6 @@ import java.awt.*;
 
 public class Lobby extends JPanel {
 
-    private static int counter = 1;
     private final int nr;
 
     private JLabel name;
@@ -19,10 +18,9 @@ public class Lobby extends JPanel {
     private JButton select;
 
 
-    Lobby(String players) {
+    Lobby(String number, String players) {
         //#TODO get lobby nr from server
-        this.nr = Lobby.counter;
-        Lobby.counter++;
+        this.nr = Integer.parseInt(number);
         this.setLayout(new GridLayout(1, 5));
         this.setPreferredSize(new Dimension(400, 60));
         this.setMaximumSize(new Dimension(600, 60));
