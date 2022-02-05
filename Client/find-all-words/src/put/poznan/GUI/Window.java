@@ -116,6 +116,9 @@ public class Window extends JFrame implements ActionListener {
         this.views.add(new VoteView());
         this.views.add(new GameView());
         for (var view : this.views) {
+            if (view.getSecondaryNextViewButton() != null) {
+                view.getSecondaryNextViewButton().addActionListener(this);
+            }
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);
             }
@@ -165,6 +168,15 @@ public class Window extends JFrame implements ActionListener {
                     nextView.onShowAction();
                     System.out.println("after action");
                 }
+            } else if (view.getSecondaryNextViewButton() != null && source == view.getSecondaryNextViewButton()) {
+
+                for (var v : this.views) {
+                    if (view.getNextViewName().equals(v.getViewName())) {
+                        nextView = v;
+                        break;
+                    }
+                }
+                nextView.onShowAction();
             } else if (source == view.getPreviousViewButton()) {
                 MyView previousView = null;
                 if (view.getViewName().equals("ConnectingView") || view.getViewName().equals("LobbyView")) {
@@ -181,8 +193,6 @@ public class Window extends JFrame implements ActionListener {
             }
         }
     }
-
-
 
 
 }

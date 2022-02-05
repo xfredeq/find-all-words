@@ -68,6 +68,7 @@ public class LobbyView extends MyView implements ActionListener {
 
         this.create = new JButton("Create lobby");
         this.create.addActionListener(this);
+        this.secondaryNextViewButton = this.create;
 
         this.cancel = new JButton("Leave game");
         this.previousViewButton = this.cancel;

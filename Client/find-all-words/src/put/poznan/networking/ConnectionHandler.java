@@ -44,6 +44,8 @@ public class ConnectionHandler {
         responseTable.put("lobbyJoin", new Triplet("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+"));
         responseTable.put("lobbyCreate", new Triplet("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
         responseTable.put("lobbyLeave", new Triplet("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
+        responseTable.put("playersVotes", new Triplet("NOTIFICATION_LOBBY_PLAYERS_[0-9]_.{4,}_[0-1]_.*"));
+        responseTable.put("selfVote", new Triplet("RESPONSE_LOBBY_VOTE_.{7}_[0-9]"));
     }
 
     @SuppressWarnings("unused")
@@ -73,7 +75,6 @@ public class ConnectionHandler {
     }
 
 
-
     public static void endConnection() {
         try {
             stopReader();
@@ -98,7 +99,7 @@ public class ConnectionHandler {
             case "GET_LOBBIES_@":
                 return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.*") || "RESPONSE_BAD_REQUEST".equals(response);
             case "LOBBY_LEAVE_@":
-                return response.matches("RESPONSE_LOBBY_LEAVE_SUCCESS");
+                return response.matches("RESPONSE_LOBBY_PLAYERS_[A-Z]+_[A-Z]+_.*");
             default:
                 if (request.matches("SET_NICKNAME_.{4,}_@")) {
                     return response.matches("RESPONSE_NICKNAME_.{7}_.*");
@@ -119,8 +120,11 @@ public class ConnectionHandler {
 
     public static String sendRequest2(String request, String type) {
         out.print(request);
+        System.out.println("po print" + request);
         out.flush();
+        System.out.println("po flush" + request);
         Object lock = ConnectionHandler.responseTable.get(type).lock;
+        System.out.println("po lock" + request);
         synchronized (lock) {
             try {
                 lock.wait();
