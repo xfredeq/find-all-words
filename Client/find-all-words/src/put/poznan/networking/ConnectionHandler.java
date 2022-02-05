@@ -45,7 +45,9 @@ public class ConnectionHandler {
         responseTable.put("lobbyCreate", new Triplet("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
         responseTable.put("lobbyLeave", new Triplet("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
         responseTable.put("playersVotes", new Triplet("NOTIFICATION_LOBBY_PLAYERS_[0-9]_.{4,}_[0-1]_.*"));
-        responseTable.put("selfVote", new Triplet("RESPONSE_LOBBY_VOTE_.{7}_[0-9]"));
+        responseTable.put("selfVote", new Triplet("RESPONSE_LOBBY_VOTE_.{7}_[0-1]_"));
+        responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_10"));
+        responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME"));
     }
     @SuppressWarnings("unused")
     public static String getMessage() {

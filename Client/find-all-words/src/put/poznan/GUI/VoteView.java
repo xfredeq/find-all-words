@@ -19,13 +19,19 @@ public class VoteView extends MyView implements ActionListener {
 
     private JPanel choicePanel;
 
+    private JButton b;
+
     private JPanel playersPanel;
     private JLabel playersListLabel;
 
     private JButton vote;
     private JButton cancel;
 
+    private JLabel timerLabel;
+    private GameTimer timer;
+
     private UpdatePlayersList updatePlayersList;
+    private UpdateTimer updateTimer;
 
     VoteView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -45,7 +51,10 @@ public class VoteView extends MyView implements ActionListener {
         title.setForeground(Color.BLUE);
         title.setOpaque(true);
 
-        this.playersListLabel = new JLabel("Players in lobby:");
+        this.timer = new GameTimer();
+        this.timerLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
+
+        this.playersListLabel = new JLabel("Players in lobby:", SwingConstants.CENTER);
         this.playersListLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 
@@ -69,6 +78,9 @@ public class VoteView extends MyView implements ActionListener {
         this.cancel = new JButton("leave lobby");
         this.previousViewButton = this.cancel;
 
+        this.b = new JButton();
+        this.nextViewButton = b;
+
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
         this.buttonPanel.setPreferredSize(new Dimension(400, 60));
@@ -77,6 +89,7 @@ public class VoteView extends MyView implements ActionListener {
         this.buttonPanel.add(this.vote);
         this.buttonPanel.add(Box.createHorizontalGlue());
         this.buttonPanel.add(this.cancel);
+
 
 
     }
@@ -90,6 +103,10 @@ public class VoteView extends MyView implements ActionListener {
         add(Box.createVerticalGlue());
         add(this.playersPanel);
         add(Box.createVerticalGlue());
+        add(this.timerLabel);
+        add(Box.createVerticalGlue());
+        add(this.timer);
+        add(Box.createVerticalGlue());
         add(this.choicePanel);
         add(Box.createVerticalGlue());
         add(this.buttonPanel);
@@ -102,6 +119,8 @@ public class VoteView extends MyView implements ActionListener {
         System.out.println("List of nicks updater started0");
         this.updatePlayersList = new UpdatePlayersList();
         this.updatePlayersList.execute();
+        this.updateTimer = new UpdateTimer();
+        this.updateTimer.execute();
         System.out.println("List of nicks updater started");
     }
 
@@ -118,7 +137,60 @@ public class VoteView extends MyView implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
         if (ae.getActionCommand().equals("Vote")) {
             String response = ConnectionHandler.sendRequest2("LOBBY_VOTE_@", "selfVote");
+
             System.out.println("voted");
+        }
+
+    }
+
+    private class UpdateTimer extends SwingWorker<Void, String> {
+
+        @Override
+        protected Void doInBackground() {
+            while (!isCancelled()) {
+                Object lock = ConnectionHandler.responseTable.get("timerStart").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(ConnectionHandler.responseTable.get("timerStart").response);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+                lock = ConnectionHandler.responseTable.get("gameStart").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(ConnectionHandler.responseTable.get("gameStart").response);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+
+
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
+            List<String> split;
+            split = new ArrayList<>(List.of(response.split("_")));
+
+            if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
+                timerLabel.setText("Game starts in...");
+                timer.setTime(Integer.parseInt(split.get(3)) * 1000);
+                timer.start();
+            }
+            if ("NOTIFICATION_START_GAME".equals(response)) {
+                timer.stop();
+                b.doClick();
+
+            }
+
         }
 
     }
