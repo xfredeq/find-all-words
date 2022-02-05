@@ -10,16 +10,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.List;
 
 public class StartView extends MyView implements ActionListener, FocusListener {
 
     private JLabel title;
 
     private JLabel nicknameLabel;
+    private JLabel nicknameTaken;
     private JTextField nickname;
 
     private JButton connect;
     private JButton exit;
+
+    private CheckNick checkNick;
 
     public StartView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -30,7 +34,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
 
     private void setComponents() {
         this.viewName = "StartView";
-        this.nextViewName = "LoadingView";
+        this.nextViewName = "GameView";
         this.title = new JLabel("Find all Words!");
 
 
@@ -39,6 +43,12 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.RED);
         title.setOpaque(true);
+
+        this.nicknameTaken = new JLabel("This nick is already used!");
+        this.nicknameTaken.setVisible(false);
+        this.nicknameTaken.setFont(new Font("Arial",Font.BOLD, 20));
+        this.nicknameTaken.setForeground(Color.RED);
+
 
         this.nicknameLabel = new JLabel("nickname:");
         this.nicknameLabel.setForeground(Color.BLACK);
@@ -53,6 +63,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
         this.connect.addActionListener(this);
+        this.connect.setActionCommand("Connect");
         this.nextViewButton = this.connect;
 
         this.exit = Tools.createButton("Exit", Color.RED);
@@ -96,6 +107,13 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         if (source == this.exit) {
             System.exit(0);
         }
+
+        //#TODO nick correctness
+        if(e.getActionCommand().equals("Connect")){
+            //this.checkNick = new CheckNick();
+            //this.checkNick.execute();
+        }
+
     }
 
     @Override
@@ -114,5 +132,19 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     @Override
     public void focusLost(FocusEvent e) {
 
+    }
+
+    private class CheckNick extends SwingWorker<Void, String>{
+
+
+        @Override
+        protected Void doInBackground(){
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks){
+
+        }
     }
 }

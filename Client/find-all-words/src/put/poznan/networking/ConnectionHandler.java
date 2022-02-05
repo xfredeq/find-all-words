@@ -13,8 +13,8 @@ import java.util.Map;
 
 
 public class ConnectionHandler {
-    public static int port;
-    public static String address;
+    public static int port = 1313;
+    public static String address = "localhost";
     public static Socket socket;
     public static HashMap<String, Triplet> responseTable;
     private static PrintWriter out;
@@ -71,6 +71,8 @@ public class ConnectionHandler {
             return null;
         }
     }
+
+
 
     public static void endConnection() {
         try {

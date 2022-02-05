@@ -1,12 +1,20 @@
 package put.poznan.GUI;
 
+import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.reflect.Field;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.lang.*;
 
-public class GameView extends MyView {
+public class GameView extends MyView implements ActionListener {
 
     private final GridBagConstraints c;
 
@@ -16,9 +24,9 @@ public class GameView extends MyView {
     private JPanel submitPanel;
 
 
-    private JPanel wordsList;
+    private JPanel wordsPanel;
     private JLabel wordsTitle;
-    private JPanel playersList;
+    private JPanel playersPanel;
     private JLabel playersTitle;
 
     private JPanel timerPanel;
@@ -34,6 +42,16 @@ public class GameView extends MyView {
 
     private JPanel letters;
 
+    private UpdateData updateData;
+
+    private ArrayList<Character> lettersList = new ArrayList<Character>(List.of(
+            'w', 'o', 'r', 'd', 'w', 'o',
+            'r', 'd', 'a', 'a', 'b', 'b',
+            'b', 'b', 'b', 'b', 'b', 'b',
+            'b', 'b', 'b', 'b', 'b', 'b',
+            'b', 'b', 'b', 'b', 'b', 'b',
+            'b', 'b', 'b', 'b', 'b', 'b'));
+
 
     public GameView() {
         this.setLayout(new GridBagLayout());
@@ -44,15 +62,39 @@ public class GameView extends MyView {
 
     }
 
+    private void addLetters(){
+        int k = 0;
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 6; j++) {
+
+                GridBagConstraints l = new GridBagConstraints();
+                l.gridx = i;
+                l.gridy = j;
+                l.weightx = 1;
+                l.weighty = 1;
+
+
+                System.out.println(this.lettersList);
+                this.letters.add(new JLabel(this.lettersList.get(k).toString()), l);
+                k++;
+                this.letters.revalidate();
+
+                this.lettersTable.add(new JScrollPane(this.letters), BorderLayout.CENTER);
+            }
+
+        }
+    }
+
     private void setComponents() {
         this.viewName = "GameView";
         this.nextViewName = "LobbyView";
         this.previousViewName = "LobbyView";
 
-        this.wordsList = new JPanel();
-        this.wordsList.setBackground(new Color(255, 199, 211));
-        this.wordsList.setMaximumSize(new Dimension(180, 40));
-        this.wordsList.setPreferredSize(new Dimension(80, 40));
+        this.wordsPanel = new JPanel();
+        this.wordsPanel.setBackground(new Color(255, 199, 211));
+        this.wordsPanel.setMaximumSize(new Dimension(180, 40));
+        this.wordsPanel.setPreferredSize(new Dimension(80, 40));
+        this.wordsPanel.setLayout(new BoxLayout(this.wordsPanel, BoxLayout.Y_AXIS));
 
         this.wordsTitle = new JLabel("Words guessed:", SwingConstants.CENTER);
         this.wordsTitle.setAlignmentX(Box.CENTER_ALIGNMENT);
@@ -61,8 +103,9 @@ public class GameView extends MyView {
         this.wordsTitle.setFont(new Font("Arial", Font.BOLD, 20));
         this.wordsTitle.setBackground(new Color(255, 199, 211));
 
-        this.playersList = new JPanel();
-        this.playersList.setBackground(new Color(172, 240, 248));
+        this.playersPanel = new JPanel();
+        this.playersPanel.setBackground(new Color(172, 240, 248));
+        this.playersPanel.setLayout(new BoxLayout(this.playersPanel, BoxLayout.Y_AXIS));
 
         this.playersTitle = new JLabel("Opponents:", SwingConstants.CENTER);
         this.playersTitle.setAlignmentX(Box.CENTER_ALIGNMENT);
@@ -100,6 +143,8 @@ public class GameView extends MyView {
         this.submit.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.submit.setMaximumSize(new Dimension(80, 40));
         this.submit.setPreferredSize(new Dimension(80, 40));
+        this.submit.setActionCommand("Submit");
+        this.submit.addActionListener(this);
 
         this.submitLabel = new JLabel("Submit the word!");
         this.submitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -183,26 +228,13 @@ public class GameView extends MyView {
         this.enterPanel.add(Box.createVerticalGlue());
 
 
-        this.wordsList.add(this.wordsTitle);
+        this.wordsPanel.add(this.wordsTitle);
 
 
-        this.playersList.add(this.playersTitle);
+        this.playersPanel.add(this.playersTitle);
 
+        addLetters();
 
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 6; j++) {
-                GridBagConstraints l = new GridBagConstraints();
-                l.gridx = i;
-                l.gridy = j;
-                l.weightx = 1;
-                l.weighty = 1;
-                this.letters.add(new JLabel("a"), l);
-                this.letters.revalidate();
-
-                this.lettersTable.add(new JScrollPane(this.letters), BorderLayout.CENTER);
-            }
-
-        }
 
         this.c.fill = GridBagConstraints.BOTH;
         this.c.gridheight = 2;
@@ -210,7 +242,7 @@ public class GameView extends MyView {
         this.c.weighty = 2;
         this.c.gridx = 0;
         this.c.gridy = 0;
-        this.add(wordsList, this.c);
+        this.add(wordsPanel, this.c);
 
         this.c.fill = GridBagConstraints.HORIZONTAL;
         this.c.gridheight = 1;
@@ -227,7 +259,7 @@ public class GameView extends MyView {
         this.c.weighty = 2;
         this.c.gridx = 2;
         this.c.gridy = 0;
-        this.add(playersList, this.c);
+        this.add(playersPanel, this.c);
 
 
         this.c.fill = GridBagConstraints.BOTH;
@@ -270,6 +302,70 @@ public class GameView extends MyView {
 
     @Override
     public void onShowAction() {
+
+        ConnectionHandler.createSocket();
+        //this.updateData = new UpdateData();
+        //this.updateData.execute();
+        System.out.println("Game data updated");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+        String response;
+        if (ae.getActionCommand().equals("Submit")) {
+            response = ConnectionHandler.sendRequest(this.enterTextField.getText());
+
+            if (response.equals("word proper")) {
+
+                wordsPanel.add(new JLabel(enterTextField.getText()));
+                for (int i = 0; i < enterTextField.getText().length(); i++) {
+                    System.out.println("letter removed" + enterTextField.getText().charAt(i));
+                    this.lettersList.remove((Character) enterTextField.getText().charAt(i));
+                    this.lettersList.add('x');
+                    System.out.println(this.lettersList);
+                }
+                this.letters.removeAll();
+                this.lettersTable.removeAll();
+                addLetters();
+
+                System.out.println("word proper");
+                wordsPanel.revalidate();
+            }
+
+        }
+    }
+
+    private class UpdateData extends SwingWorker<Void, String> {
+
+        @Override
+        protected Void doInBackground() {
+            for (String response = ConnectionHandler.getMessage();
+                 !isCancelled() && response != null;
+                 response = ConnectionHandler.getMessage()) {
+                publish(response);
+
+            }
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
+            if (response.equals("word proper")) {
+                wordsPanel.add(new JLabel(enterTextField.getText()));
+                System.out.println("word proper");
+                letters.removeAll();
+                lettersTable.removeAll();
+                addLetters();
+                lettersPanel.revalidate();
+
+            } else if (response.equals("")) {
+
+                playersPanel.add(new JLabel());
+            }
+            wordsPanel.revalidate();
+            validate();
+        }
 
     }
 }

@@ -35,8 +35,6 @@ int readArgument(char *txt, bool type);
 void setReuseAddr(int sock);
 void acceptUsers();
 
-void resetOneshot(int epollFd, Player *player);
-
 void sendToAllBut(int fd, char *buffer, int count);
 
 struct Buffer
@@ -531,6 +529,7 @@ void Player::processRequests(int fd, char *buffer, int length)
             }
         }
         }
+
 
     delete type;
     delete subType;
