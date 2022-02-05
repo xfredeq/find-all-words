@@ -127,7 +127,7 @@ public class VoteView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("GET_PLAYERS_@", "playersVotes"));
+            publish(ConnectionHandler.sendRequest2("LOBBY_PLAYERS_@", "playersVotes"));
             while (!isCancelled()) {
                 Object lock = ConnectionHandler.responseTable.get("playersVotes").lock;
                 synchronized (lock) {
@@ -149,6 +149,9 @@ public class VoteView extends MyView implements ActionListener {
             String response = chunks.get(chunks.size() - 1);
             List<String> split;
             playersPanel.removeAll();
+            playersPanel.revalidate();
+            playersPanel.repaint();
+            validate();
             split = new ArrayList<>(List.of(response.split("_")));
             int count = Integer.parseInt(split.get(3));
             for (int i = 0; i < count; i++) {

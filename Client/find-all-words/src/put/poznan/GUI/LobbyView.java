@@ -222,10 +222,9 @@ public class LobbyView extends MyView implements ActionListener {
                 lobbies.put(number, l);
                 l.getSelect().addActionListener(listener);
                 lobbyPanel.add(l);
-                lobbyPanel.revalidate();
-                validate();
-
             }
+            lobbyPanel.revalidate();
+            validate();
         }
     }
 }
