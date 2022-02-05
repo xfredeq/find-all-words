@@ -5,12 +5,25 @@
 #include <cmath>
 #include <fstream>
 #include <cstring>
+#include <thread>
+#include <atomic>
+#include <random>
 
 using namespace std;
 
 int assess(int length){
     if(length > 1)return ((length*(log(length)/log(4))) + 1);
         return 0;
+}
+
+char generate_letter(){
+    char c;
+    mt19937 gen((std::random_device()()));
+    uniform_int_distribution<uint8_t> letter(97, 122);
+
+    c = char(letter(gen));
+
+    return c;
 }
 
 int check_word(string w){
