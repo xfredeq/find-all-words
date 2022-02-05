@@ -45,7 +45,6 @@ public class ConnectionHandler {
         responseTable.put("lobbyCreate", new Triplet("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
         responseTable.put("lobbyLeave", new Triplet("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
     }
-
     @SuppressWarnings("unused")
     public static String getMessage() {
         try {
