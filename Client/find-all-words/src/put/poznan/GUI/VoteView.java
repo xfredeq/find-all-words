@@ -18,10 +18,9 @@ public class VoteView extends MyView implements ActionListener {
     private JPanel buttonPanel;
 
     private JPanel choicePanel;
-    private JRadioButton voteYes;
-    private JRadioButton voteNo;
 
     private JPanel playersPanel;
+    private JLabel playersListLabel;
 
     private JButton vote;
     private JButton cancel;
@@ -46,6 +45,9 @@ public class VoteView extends MyView implements ActionListener {
         title.setForeground(Color.BLUE);
         title.setOpaque(true);
 
+        this.playersListLabel = new JLabel("Players in lobby:");
+        this.playersListLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
 
         this.playersPanel = new JPanel();
         this.playersPanel.setLayout(new GridLayout(6, 1));
@@ -54,27 +56,16 @@ public class VoteView extends MyView implements ActionListener {
         this.playersPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 
-        this.voteYes = new JRadioButton("Yes");
-        this.voteYes.setActionCommand("Yes");
-        this.voteYes.addActionListener(this);
-
-        this.voteNo = new JRadioButton("No");
-        this.voteNo.setActionCommand("No");
-        this.voteNo.addActionListener(this);
-
         this.choicePanel = new JPanel();
         this.choicePanel.setLayout(new GridLayout(1, 3));
         this.choicePanel.setPreferredSize(new Dimension(400, 60));
         this.choicePanel.setMaximumSize(new Dimension(400, 60));
 
 
-        this.choicePanel.add(this.voteYes);
-        this.choicePanel.add(Box.createHorizontalGlue());
-        this.choicePanel.add(this.voteNo);
-
-
         this.vote = new JButton("Vote");
-        this.nextViewButton = this.vote;
+        this.vote.addActionListener(this);
+        this.vote.setActionCommand("Vote");
+
         this.cancel = new JButton("leave lobby");
         this.previousViewButton = this.cancel;
 
@@ -94,6 +85,9 @@ public class VoteView extends MyView implements ActionListener {
         add(Box.createVerticalGlue());
         add(this.title);
         add(Box.createVerticalGlue());
+
+        add(this.playersListLabel);
+        add(Box.createVerticalGlue());
         add(this.playersPanel);
         add(Box.createVerticalGlue());
         add(this.choicePanel);
@@ -105,7 +99,7 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
-
+        System.out.println("List of nicks updater started0");
         this.updatePlayersList = new UpdatePlayersList();
         this.updatePlayersList.execute();
         System.out.println("List of nicks updater started");
@@ -122,16 +116,10 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ae) {
-        if (ae.getActionCommand().equals("Yes")) {
-            if (this.voteYes.isSelected()) {
-                this.voteNo.setSelected(false);
-            }
-        } else if (ae.getActionCommand().equals("No")) {
-            if (this.voteNo.isSelected()) {
-                this.voteYes.setSelected(false);
-            }
+        if (ae.getActionCommand().equals("Vote")) {
+            String response = ConnectionHandler.sendRequest2("LOBBY_VOTE_@", "selfVote");
+            System.out.println("voted");
         }
-
 
     }
 
@@ -139,13 +127,17 @@ public class VoteView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            for (String response = ConnectionHandler.sendRequest("GET_PLAYERS_@");
-                 !isCancelled() && response != null;
-                 response = ConnectionHandler.sendRequest("GET_PLAYERS_@")) {
-                publish(response);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignore) {
+            publish(ConnectionHandler.sendRequest2("GET_PLAYERS_@", "playersVotes"));
+            while (!isCancelled()) {
+                Object lock = ConnectionHandler.responseTable.get("playersVotes").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(ConnectionHandler.responseTable.get("playersVotes").response);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
             }
             return null;
@@ -161,17 +153,15 @@ public class VoteView extends MyView implements ActionListener {
             int count = Integer.parseInt(split.get(3));
             for (int i = 0; i < count; i++) {
                 String nick = split.get(4 + i * 2);
-                String color = split.get(5 + i * 2);
+                String vote = split.get(5 + i * 2);
                 Color c = null;
-                try {
-                    Field field = Class.forName("java.awt.Color").getField(color);
-                    c = (Color) field.get(null);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
+                JLabel l = new JLabel(nick, SwingConstants.CENTER);
+                if ("1".equals(vote)) {
+                    l.setBackground(Color.GREEN);
+                } else {
+                    l.setBackground(Color.RED);
                 }
-                JLabel l = new JLabel(nick);
-                l.setBackground(c);
+
                 l.setAlignmentX(Component.CENTER_ALIGNMENT);
                 l.setOpaque(true);
                 playersPanel.add(l);
