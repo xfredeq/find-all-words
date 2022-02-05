@@ -64,4 +64,6 @@ public class Lobby extends JPanel {
         this.players.setText(number);
     }
 
+    public int getNumber() {return this.nr;}
+
 }

@@ -1,11 +1,13 @@
 package put.poznan.GUI;
 
+import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 public class VoteView extends MyView implements ActionListener {
 
@@ -93,8 +95,8 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        //#TODO break connection
-
+        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@");
+        System.out.println(Arrays.toString(response.split("_")));
         super.returnToPreviousView(cardLayout, cardPane);
     }
 

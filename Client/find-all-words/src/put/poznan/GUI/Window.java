@@ -112,7 +112,7 @@ public class Window extends JFrame implements ActionListener {
     private void addViews() {
         this.views.add(new StartView());
         this.views.add(new LoadingView(cardLayout, cardPane));
-        this.views.add(new LobbyView());
+        this.views.add(new LobbyView(this.cardLayout, this.cardPane));
         this.views.add(new VoteView());
         this.views.add(new GameView());
         for (var view : this.views) {
@@ -170,15 +170,14 @@ public class Window extends JFrame implements ActionListener {
                 if (view.getViewName().equals("ConnectingView") || view.getViewName().equals("LobbyView")) {
                     this.menuSettings.setVisible(true);
                 }
-                view.returnToPreviousView(this.cardLayout, this.cardPane);
                 for (var v : this.views) {
                     if (view.getPreviousViewName().equals(v.getViewName())) {
                         previousView = v;
                         break;
                     }
                 }
-                previousView.onShowAction();
                 view.returnToPreviousView(this.cardLayout, this.cardPane);
+                previousView.onShowAction();
             }
         }
     }

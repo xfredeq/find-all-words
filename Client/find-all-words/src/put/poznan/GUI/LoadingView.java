@@ -106,12 +106,13 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         //#TODO break connection
+        ConnectionHandler.endConnection();
         this.progressThread.interrupt();
         this.connectionTask.cancel(true);
         this.connectionTask.removePropertyChangeListener(this);
         this.progressBar.setValue(0);
         this.enter.setVisible(false);
-        ConnectionHandler.endConnection();
+
         System.out.println("returning");
         super.returnToPreviousView(cardLayout, cardPane);
     }
@@ -137,25 +138,51 @@ public class LoadingView extends MyView implements PropertyChangeListener {
             for (int i = 0; i < 5; i++) {
                 if (i == 0) {
                     ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
-                } else if (i == 1) {
                     ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
+                } else if (i == 1) {
+                    ConnectionHandler.initializeTable();
                 } else if (i == 2) {
                     if (!ConnectionHandler.createSocket()) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
+                    ConnectionHandler.readMessages();
                 } else if (i == 3) {
-                    String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
+                    /*String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
+                    }*/
+                    ConnectionHandler.send("GET_LOBBYSIZE_@");
+                    String response = "";
+                    Object lock = ConnectionHandler.responseTable.get("lobbySize").lock;
+                    synchronized (lock) {
+                        try {
+                            lock.wait();
+                            response = ConnectionHandler.responseTable.get("lobbySize").response;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
-                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@");
+                    //String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@");
+                    ConnectionHandler.send("SET_NICKNAME_" + nickname + "_@");
+                    String response = "";
+                    Object lock = ConnectionHandler.responseTable.get("nickname").lock;
+                    synchronized (lock) {
+                        try {
+                            lock.wait();
+                            response = ConnectionHandler.responseTable.get("nickname").response;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
@@ -178,16 +205,21 @@ public class LoadingView extends MyView implements PropertyChangeListener {
             System.out.println(ConnectionHandler.port);
 
             try {
-                progressThread.join();
+                if (progressThread.isAlive()){
+                    progressThread.join();
+                }
             } catch (InterruptedException e) {
+                e.printStackTrace();
                 return null;
 
             }
+            System.out.println("return swingworker");
             return null;
         }
 
         @Override
         public void done() {
+            System.out.println("in done");
             setCursor(null);
             System.out.println("done " + connectionTask.getProgress());
             if (connectionTask.getProgress() == 100) {
@@ -224,6 +256,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         return;
                     }
                 }
+                System.out.println("counter end");
             }
 
         }
