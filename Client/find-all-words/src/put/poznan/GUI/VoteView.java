@@ -53,6 +53,7 @@ public class VoteView extends MyView implements ActionListener {
 
         this.timer = new GameTimer();
         this.timerLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
+        this.timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         this.playersListLabel = new JLabel("Players in lobby:", SwingConstants.CENTER);
         this.playersListLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
