@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 
 public class ConnectionHandler {
     public static int port = 1313;
@@ -78,6 +77,7 @@ public class ConnectionHandler {
             case "GET_PLAYERS_@":
                 return response.matches("RESPONSE_PLAYERS_COUNT_[1-9]_.{4,}_.+");
             case "word":
+            case "bbb":
                 return true;
             default:
                 if (request.matches("SET_NICKNAME_.{4,}_@")) {

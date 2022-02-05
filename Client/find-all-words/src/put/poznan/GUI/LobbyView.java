@@ -198,3 +198,4 @@ public class LobbyView extends MyView implements ActionListener {
         }
     }
 }
+
