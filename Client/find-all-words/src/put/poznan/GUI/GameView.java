@@ -303,7 +303,7 @@ public class GameView extends MyView implements ActionListener {
     @Override
     public void onShowAction() {
 
-        ConnectionHandler.createSocket();
+        //ConnectionHandler.createSocket();
         //this.updateData = new UpdateData();
         //this.updateData.execute();
         System.out.println("Game data updated");

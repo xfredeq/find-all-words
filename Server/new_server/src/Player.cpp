@@ -14,8 +14,10 @@ Player::~Player()
     this->handlingThread.detach();
     this->handlingThread.~thread();
     epoll_ctl(mainEpollFd, EPOLL_CTL_DEL, _fd, nullptr);
+    epoll_ctl(this->playerEpollFd, EPOLL_CTL_DEL, _fd, nullptr);
     shutdown(_fd, SHUT_RDWR);
     close(_fd);
+    close(this->playerEpollFd);
 }
 
 void Player::write(char *buffer, int count)
@@ -47,7 +49,13 @@ void Player::write(char *buffer, int count)
 void Player::remove()
 {
     printf("removing %d\n", _fd);
+    if (this->inLobby)
+    {
+        this->lobby->removePlayer(this);
+    }
     freePlayers.erase(this);
+
+    // this->handlingThread.~thread();
     delete this;
 }
 
@@ -203,7 +211,7 @@ void Player::processRequests(int fd, char *buffer, int length)
                 strcpy(nickname, request.substr(0, index).c_str());
                 this->nickname = string(nickname);
 
-                string response = "RESPONSE_NICKNAME_" + this->nickname + "\n";
+                string response = "RESPONSE_NICKNAME_SUCCESS_" + this->nickname + "\n";
                 this->write((char *)response.c_str(), response.length());
             }
         }
@@ -216,18 +224,8 @@ void Player::processRequests(int fd, char *buffer, int length)
             }
             else if (strcmp("LOBBIES", subType) == 0)
             {
-                string response = "RESPONSE_LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
-                for (auto lobby : lobbies)
-                {
-                    response += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
-                }
+                string response = "RESPONSE_" + constructLobbiesMessage();
 
-                if (lobbies.size() == 0)
-                {
-                    response += "null";
-                }
-
-                response += '\n';
                 this->write((char *)response.c_str(), response.length());
             }
         }
@@ -239,10 +237,9 @@ void Player::processRequests(int fd, char *buffer, int length)
                 lobbies.insert(lobby);
                 string response = "RESPONSE_LOBBY_CREATE_SUCCESS_" + to_string(lobby->getNumber()) + '\n';
 
-                this->write((char *)response.c_str(), response.length());
-
                 this->lobby = lobby;
                 lobby->addPlayer(this);
+                this->write((char *)response.c_str(), response.length());
             }
             else if (strcmp("JOIN", subType) == 0)
             {
@@ -275,18 +272,16 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                 if (lobby != nullptr)
                 {
-                    response = "RESPONSE_LOBBY_JOIN_" + to_string(number) + "_SUCCESS\n";
+                    response = "RESPONSE_LOBBY_JOIN_SUCCESS_" + to_string(number) + "\n";
                     this->lobby = lobby;
                     this->lobby->addPlayer(this);
+                    this->write((char *)response.c_str(), response.length());
                 }
                 else
                 {
-                    response = "RESPONSE_LOBBY_JOIN_FAIL_LOBBY_" + to_string(number) + "_NOTEXISTS\n";
+                    response = "RESPONSE_LOBBY_JOIN_FAILURE_" + to_string(number) + "\n";
+                    this->write((char *)response.c_str(), response.length());
                 }
-
-                cout << response << endl;
-
-                this->write((char *)response.c_str(), response.length());
             }
         }
         else
@@ -310,13 +305,18 @@ void Player::processRequests(int fd, char *buffer, int length)
         {
             if (strcmp("LEAVE", subType) == 0)
             {
-                string response = "RESPONSE_LOBBY_LEAVE_SUCCESS\n";
-                
+                string response = "RESPONSE_LOBBY_LEAVE_SUCCESS_" + to_string(this->lobby->getNumber()) + "\n";
+
                 this->write((char *)response.c_str(), response.length());
-                cout<<"leave sent"<<endl;
+                cout << "leave sent: " << response << endl;
 
                 this->lobby->removePlayer(this);
                 this->lobby = nullptr;
+            }
+            else
+            {
+                string response = "RESPONSE_BAD_REQUEST\n";
+                this->write((char *)response.c_str(), response.length());
             }
         }
         else
@@ -328,6 +328,15 @@ void Player::processRequests(int fd, char *buffer, int length)
 
     delete type;
     delete subType;
+}
+
+void Player::notifyAllWaiting()
+{
+    string notification = "NOTIFICATION_" + constructLobbiesMessage();
+    for (auto player : freePlayers)
+    {
+        player->write((char *)notification.c_str(), notification.length());
+    }
 }
 
 void Player::waitForWrite(bool epollout)

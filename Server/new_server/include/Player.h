@@ -69,6 +69,8 @@ public:
     string getNickname();
 
     void changeLobbyState();
+
+    void notifyAllWaiting();
 };
 
 #endif

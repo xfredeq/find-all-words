@@ -34,7 +34,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
 
     private void setComponents() {
         this.viewName = "StartView";
-        this.nextViewName = "GameView";
+        this.nextViewName = "LoadingView";
         this.title = new JLabel("Find all Words!");
 
 

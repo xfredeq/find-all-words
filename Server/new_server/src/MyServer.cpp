@@ -38,7 +38,6 @@ public:
     }
 } serverHandler;
 
-
 int main(int argc, char **argv)
 {
     if (argc < 3)
@@ -136,4 +135,19 @@ void sendToAllBut(int fd, char *buffer, int count)
     }
 }
 
+string constructLobbiesMessage()
+{
+    string message = "LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
+    for (auto lobby : lobbies)
+    {
+        message += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
+    }
 
+    if (lobbies.size() == 0)
+    {
+        message += "null";
+    }
+
+    message += '\n';
+    return message;
+}
