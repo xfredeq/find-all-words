@@ -30,7 +30,6 @@ void Player::write(char *buffer, int count)
         dataToWrite.emplace_back(buffer, count);
         return;
     }
-    cout << "WRITE: " << this_thread::get_id() << endl;
     int sent = send(_fd, buffer, count, MSG_DONTWAIT);
     if (sent == count)
         return;
@@ -59,7 +58,6 @@ void Player::remove()
     }
     freePlayers.erase(this);
 
-    // this->handlingThread.~thread();
     delete this;
 }
 
@@ -88,9 +86,19 @@ void Player::setVote(bool vote)
     this->votedStart = vote;
 }
 
-void Player::changeGameState()
+void Player::setGameState(bool state)
 {
-    this->inGame = !this->inGame;
+    this->inGame = state;
+}
+
+int Player::getPoints()
+{
+    return this->points;
+}
+
+void Player::setPoints(int points)
+{
+    this->points = points;
 }
 
 void Player::waitForEvents()
@@ -326,23 +334,14 @@ void Player::processRequests(int fd, char *buffer, int length)
         }
         else // PLAYER IN LOBBY
         {
-            if (strcmp("SUBMIT", type) == 0)
-            {
-                if (strcmp("WORD", subType) == 0)
-                {
-                    string response = "RESPONSE_SUBMIT_WORD_SUCCESS\n";
-                    this->write((char *)response.c_str(), response.length());
-                }
-            }
 
-            else if (strcmp("LOBBY", type) == 0)
+            if (strcmp("LOBBY", type) == 0)
             {
                 if (strcmp("LEAVE", subType) == 0)
                 {
                     string response = "RESPONSE_LOBBY_LEAVE_SUCCESS_" + to_string(this->lobby->getNumber()) + "\n";
 
                     this->write((char *)response.c_str(), response.length());
-                    cout << "leave sent: " << response << endl;
 
                     this->lobby->removePlayer(this);
                     this->lobby = nullptr;
@@ -381,6 +380,26 @@ void Player::processRequests(int fd, char *buffer, int length)
     }
     else // PLAYER IN GAME
     {
+        if (strcmp("SUBMIT", type) == 0)
+        {
+            if (strcmp("WORD", subType) == 0)
+            {
+                string response = "RESPONSE_SUBMIT_WORD_SUCCESS\n";
+                this->write((char *)response.c_str(), response.length());
+            }
+        }
+        else if (strcmp("LOBBY", type) == 0)
+        {
+            if (strcmp("LEAVE", subType) == 0)
+            {
+                string response = "RESPONSE_LOBBY_LEAVE_SUCCESS_" + to_string(this->lobby->getNumber()) + "\n";
+
+                this->write((char *)response.c_str(), response.length());
+
+                this->lobby->removePlayer(this);
+                this->lobby = nullptr;
+            }
+        }
     }
 
     delete type;

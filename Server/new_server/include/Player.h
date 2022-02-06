@@ -78,10 +78,13 @@ public:
     bool getVote();
     void setVote(bool vote);
 
-    void changeGameState();
+    void setGameState(bool state);
 
     void notifyAllWaiting();
     void notifyAllInLobby();
+
+    int getPoints();
+    void setPoints(int points);
 };
 
 #endif

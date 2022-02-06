@@ -4,14 +4,10 @@ Lobby::Lobby(int lobbyNumber)
 {
     this->lobbyEpollFd = epoll_create1(0);
     this->number = lobbyNumber;
+    this->gameStarted = false;
 }
 
-Lobby::~Lobby()
-{
-    this->countdownThread.detach();
 
-    this->GameThread.~thread();
-}
 
 void Lobby::addPlayer(Player *player)
 {
@@ -26,13 +22,15 @@ void Lobby::removePlayer(Player *player)
 {
     player->changeLobbyState();
     player->setVote(false);
+    player->setGameState(false);
+    player->setPoints(0);
     this->lobbyPlayers.erase(player);
     freePlayers.insert(player);
 
     if (this->lobbyPlayers.size() == 0)
     {
         lobbies.erase(this);
-        delete this;
+        //delete this;
         player->notifyAllWaiting();
         return;
     }
@@ -64,13 +62,24 @@ void Lobby::startGame()
 {
     cout << "CD THREAD: " << this_thread::get_id() << endl;
     string message = "NOTIFICATION_START_COUNTDOWN_10\n";
+    this->gameStarted = true;
     for (auto player : this->lobbyPlayers)
     {
         player->write((char *)message.c_str(), message.size());
-        player->changeGameState();
+        player->setGameState(true);
     }
     sleep(10);
-    message = "NOTIFICATION_START_GAME" + to_string(roundDuration) +"\n";
+    if(this->lobbyPlayers.size() == 1) {
+            Player * winner = (Player *)*this->lobbyPlayers.begin();
+
+            string notification = "NOTIFICATION_GAME_VICTORY_ENEMIES_LEFT\n";
+
+            winner->write((char*)notification.c_str(), notification.size());
+            this->removePlayer(winner);
+            return;
+        }
+    
+    message = "NOTIFICATION_START_GAME_" + to_string(roundDuration) +"\n";
     for (auto player : this->lobbyPlayers)
     {
         player->write((char *)message.c_str(), message.size());
@@ -89,6 +98,10 @@ void Lobby::game()
     for (int i = 0; i < roundsNumber; i++)
     {
         thread(&Lobby::round, this).join();
+        if(this->lobbyPlayers.size() == 0)
+        {
+            return;
+        }
     }
 
     this->calculateResults();
@@ -96,11 +109,22 @@ void Lobby::game()
 
 void Lobby::round()
 {
+    string notification;
     for (int i = 0; i < roundDuration; i += wordInterval)
     {
+        if(this->lobbyPlayers.size() == 1) {
+            Player * winner = (Player *)*this->lobbyPlayers.begin();
+
+            notification = "NOTIFICATION_GAME_VICTORY_PLACE_1_POINTS_" 
+            + to_string(winner->getPoints()) + "\n";
+
+            winner->write((char*)notification.c_str(), notification.size());
+            this->removePlayer(winner);
+            return;
+        }
         char c = getRandomChar();
         cout << i << " " << c << endl;
-        string notification = "NOTIFICATION_LETTER_" + to_string(c) + "\n";
+        notification = "NOTIFICATION_LETTER_" + to_string(c) + "\n";
         for (auto player : this->lobbyPlayers)
         {
             player->write((char *)notification.c_str(), notification.size());
@@ -126,4 +150,9 @@ int Lobby::getPlayersNumber()
 unordered_set<Player *> Lobby::getPlayers()
 {
     return this->lobbyPlayers;
+}
+
+bool Lobby::gameInProgress()
+{
+    return this->gameStarted;
 }

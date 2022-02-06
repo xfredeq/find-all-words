@@ -12,6 +12,9 @@ class Lobby
 private:
     int number;
     int lobbyEpollFd;
+
+    bool gameStarted;
+
     unordered_set<Player *> lobbyPlayers;
 
     thread countdownThread;
@@ -19,7 +22,6 @@ private:
 
 public:
     Lobby(int);
-    ~Lobby();
 
     int getNumber();
     int getPlayersNumber();
@@ -39,12 +41,13 @@ public:
 
     void startGame();
 
+    bool gameInProgress();
+
     void game();
 
     void round();
 
     void calculateResults();
-
 };
 
 #endif

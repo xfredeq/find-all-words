@@ -44,7 +44,7 @@ public:
 
 int main(int argc, char **argv)
 {
-    cout<<"MAIN: "<<this_thread::get_id()<<endl;
+    cout << "MAIN: " << this_thread::get_id() << endl;
     if (argc < 3)
         error(1, 0, "Need 2 arg (port, lobby size)");
     auto port = readArgument(argv[1], true);
@@ -142,13 +142,21 @@ void sendToAllBut(int fd, char *buffer, int count)
 
 string constructLobbiesMessage()
 {
-    string message = "LOBBIES_COUNT_" + to_string(lobbies.size()) + "_";
+    bool tmp = false;
+    int count = 0;
+    string m = "";
     for (auto lobby : lobbies)
     {
-        message += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
+        if (!lobby->gameInProgress())
+        {
+            count++;
+            tmp = true;
+            m += "NUMBER_" + to_string(lobby->getNumber()) + "_PLAYERS_" + to_string(lobby->getPlayersNumber()) + '_';
+        }
     }
+    string message = "LOBBIES_COUNT_" + to_string(count) + "_" + m;
 
-    if (lobbies.size() == 0)
+    if (!tmp)
     {
         message += "null";
     }
