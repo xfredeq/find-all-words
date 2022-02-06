@@ -121,6 +121,8 @@ public class VoteView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
+        this.vote.setEnabled(true);
+        this.timer = new GameTimer();
         System.out.println("List of nicks updater started");
     }
 
@@ -158,7 +160,7 @@ public class VoteView extends MyView implements ActionListener {
                         lock.wait();
                         publish(ConnectionHandler.responseTable.get("timerStart").response);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         return null;
                     }
                 }
@@ -168,7 +170,7 @@ public class VoteView extends MyView implements ActionListener {
                         lock.wait();
                         publish(ConnectionHandler.responseTable.get("gameStart").response);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         return null;
                     }
                 }
@@ -181,14 +183,14 @@ public class VoteView extends MyView implements ActionListener {
             String response = chunks.get(chunks.size() - 1);
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
-
-            if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
+            System.out.println(split);
+            if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
                 vote.setEnabled(false);
                 timerLabel.setText("Game starts in...");
                 timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                 timer.start();
             }
-            if ("NOTIFICATION_START_GAME".equals(response)) {
+            if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
                 timer.stop();
                 fakeButton.doClick();
 
@@ -210,7 +212,7 @@ public class VoteView extends MyView implements ActionListener {
                         lock.wait();
                         publish(ConnectionHandler.responseTable.get("playersVotes").response);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         return null;
                     }
                 }
