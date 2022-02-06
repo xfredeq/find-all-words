@@ -2,6 +2,7 @@ package put.poznan.GUI;
 
 import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
+import put.poznan.tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,20 +38,22 @@ public class GameView extends MyView implements ActionListener {
 
     private JLabel submitLabel;
     private JLabel timerLabel;
-    private JLabel timeElapsed;
+    private GameTimer gameTimer;
     private JLabel letterLabel;
 
     private JPanel letters;
 
     private UpdateData updateData;
+    private UpdateTimer updateTimer;
+    private UpdatePlayersList updatePlayersList;
 
     private ArrayList<Character> lettersList = new ArrayList<Character>(List.of(
-            'w', 'o', 'r', 'd', 'w', 'o',
-            'r', 'd', 'a', 'a', 'b', 'b',
-            'b', 'b', 'b', 'b', 'b', 'b',
-            'b', 'b', 'b', 'b', 'b', 'b',
-            'b', 'b', 'b', 'b', 'b', 'b',
-            'b', 'b', 'b', 'b', 'b', 'b'));
+            'w', 'a', ' ', ' ', ' ', ' ',
+            'o', 'a', ' ', ' ', ' ', ' ',
+            'r', 'a', ' ', ' ', ' ', ' ',
+            'd', 'a', ' ', ' ', ' ', ' ',
+            'w', ' ', ' ', ' ', ' ', ' ',
+            'a', ' ', ' ', ' ', ' ', ' '));
 
 
     public GameView() {
@@ -62,7 +65,7 @@ public class GameView extends MyView implements ActionListener {
 
     }
 
-    private void addLetters(){
+    private void addLetters() {
         int k = 0;
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
@@ -83,6 +86,19 @@ public class GameView extends MyView implements ActionListener {
             }
 
         }
+    }
+
+    private void updatePlayers(){
+        this.playersPanel.setBackground(new Color(172, 240, 248));
+        this.playersPanel.setLayout(new BoxLayout(this.playersPanel, BoxLayout.Y_AXIS));
+        this.playersTitle = new JLabel("Opponents:", SwingConstants.CENTER);
+        this.playersTitle.setAlignmentX(Box.CENTER_ALIGNMENT);
+        this.playersTitle.setMaximumSize(new Dimension(180, 40));
+        this.playersTitle.setPreferredSize(new Dimension(120, 40));
+        this.playersTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        this.playersTitle.setBackground(new Color(172, 240, 248));
+
+        this.playersPanel.add(this.playersTitle);
     }
 
     private void setComponents() {
@@ -160,6 +176,8 @@ public class GameView extends MyView implements ActionListener {
         this.timerPanel.setPreferredSize(new Dimension(180, 40));
         this.timerPanel.setLayout(new BoxLayout(this.timerPanel, BoxLayout.Y_AXIS));
 
+        this.gameTimer = new GameTimer();
+
         this.timerLabel = new JLabel("Remaining time:", SwingConstants.CENTER);
         this.timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.timerLabel.setMaximumSize(new Dimension(180, 40));
@@ -167,11 +185,11 @@ public class GameView extends MyView implements ActionListener {
         this.timerLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
         this.timerPanel.setBackground(new Color(221, 207, 255));
 
-        this.timeElapsed = new JLabel(LocalTime.now().toString(), SwingConstants.CENTER);
+        /*this.timeElapsed = new JLabel(LocalTime.now().toString(), SwingConstants.CENTER);
         this.timeElapsed.setMaximumSize(new Dimension(180, 40));
         this.timeElapsed.setPreferredSize(new Dimension(80, 40));
         this.timeElapsed.setFont(new Font("Monospaced", Font.BOLD, 20));
-        this.timeElapsed.setBackground(new Color(221, 207, 255));
+        this.timeElapsed.setBackground(new Color(221, 207, 255));*/
 
         this.lettersPanel = new JPanel(new BorderLayout(8, 8));
         this.lettersPanel.setBackground(new Color(207, 206, 220));
@@ -210,8 +228,8 @@ public class GameView extends MyView implements ActionListener {
         this.timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.timerPanel.add(this.timerLabel);
         this.timerPanel.add(Box.createVerticalGlue());
-        this.timeElapsed.setAlignmentX(Component.CENTER_ALIGNMENT);
-        this.timerPanel.add(this.timeElapsed);
+
+        this.timerPanel.add(this.gameTimer);
         this.timerPanel.add(Box.createVerticalGlue());
 
 
@@ -303,7 +321,10 @@ public class GameView extends MyView implements ActionListener {
     @Override
     public void onShowAction() {
 
-        //ConnectionHandler.createSocket();
+        this.updatePlayersList = new UpdatePlayersList();
+        this.updatePlayersList.execute();
+        this.updateTimer = new UpdateTimer();
+        this.updateTimer.execute();
         //this.updateData = new UpdateData();
         //this.updateData.execute();
         System.out.println("Game data updated");
@@ -313,15 +334,15 @@ public class GameView extends MyView implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
         String response;
         if (ae.getActionCommand().equals("Submit")) {
-            response = ConnectionHandler.sendRequest(this.enterTextField.getText());
+            response = ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord");
 
-            if (response.equals("word proper")) {
+            if (response.matches("RESPONSE_WORD_.{7}")) {
 
                 wordsPanel.add(new JLabel(enterTextField.getText()));
                 for (int i = 0; i < enterTextField.getText().length(); i++) {
                     System.out.println("letter removed" + enterTextField.getText().charAt(i));
                     this.lettersList.remove((Character) enterTextField.getText().charAt(i));
-                    this.lettersList.add('x');
+                    this.lettersList.add(' ');
                     System.out.println(this.lettersList);
                 }
                 this.letters.removeAll();
@@ -335,37 +356,144 @@ public class GameView extends MyView implements ActionListener {
         }
     }
 
-    private class UpdateData extends SwingWorker<Void, String> {
+    @Override
+    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
+        gameTimer.stop();
+        this.updatePlayersList.cancel(true);
+        this.updateTimer.cancel(true);
+        this.updateData.cancel(true);
+        super.returnToPreviousView(cardLayout, cardPane);
+    }
+
+    private class UpdatePlayersList extends SwingWorker<Void, String> {
 
         @Override
         protected Void doInBackground() {
-            for (String response = ConnectionHandler.getMessage();
-                 !isCancelled() && response != null;
-                 response = ConnectionHandler.getMessage()) {
-                publish(response);
-
+            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "playersList"));
+            while (!isCancelled()) {
+                Object lock = ConnectionHandler.responseTable.get("playersList").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(ConnectionHandler.responseTable.get("playersList").response);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
             }
             return null;
         }
 
+
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
-            if (response.equals("word proper")) {
-                wordsPanel.add(new JLabel(enterTextField.getText()));
-                System.out.println("word proper");
-                letters.removeAll();
-                lettersTable.removeAll();
-                addLetters();
-                lettersPanel.revalidate();
+            List<String> split;
+            playersPanel.removeAll();
+            playersPanel.repaint();
+            updatePlayers();
+            split = new ArrayList<>(List.of(response.split("_")));
+            int count = Integer.parseInt(split.get(3));
+            for (int i = 0; i < count; i++) {
+                String nick = split.get(4 + i * 2);
+                String score = split.get(5 + i * 2);
+                Color c = null;
+                JLabel l = new JLabel(nick + "   " + score, SwingConstants.CENTER);
+                l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                l.setOpaque(true);
+                playersPanel.add(l);
 
-            } else if (response.equals("")) {
-
-                playersPanel.add(new JLabel());
             }
-            wordsPanel.revalidate();
+            playersPanel.revalidate();
             validate();
+        }
+    }
+
+    private class UpdateTimer extends SwingWorker<Void, String> {
+
+        protected Void doInBackground() {
+            publish(PropertiesHandler.getProperty("game_duration"));
+            return null;
+        }
+        /*@Override
+        protected Void doInBackground() {
+            while (!isCancelled()) {
+                String lock = PropertiesHandler.getProperty("game_duration");
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(PropertiesHandler.getProperty("game_duration"));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }*/
+
+    @Override
+    protected void process(List<String> chunks) {
+        String response = chunks.get(chunks.size() - 1);
+
+        if (!"0".equals(response)) {
+            gameTimer.setTime(Integer.parseInt(response) * 1000 * 60);
+            gameTimer.start();
         }
 
     }
+
+}
+
+
+private class UpdateData extends SwingWorker<Void, String> {
+
+    @Override
+    protected Void doInBackground() {
+
+        publish(ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord"));
+        while (!isCancelled()) {
+            Object lock = ConnectionHandler.responseTable.get("checkWord").lock;
+            synchronized (lock) {
+                try {
+                    lock.wait();
+                    publish(ConnectionHandler.responseTable.get("checkWord").response);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected void process(List<String> chunks) {
+        String response = chunks.get(chunks.size() - 1);
+        List<String> split;
+        split = new ArrayList<>(List.of(response.split("_")));
+        if ("SUCCESS".equals(split.get(2))) {
+            JLabel word = new JLabel(enterTextField.getText());
+            word.setBackground(Color.GREEN);
+            wordsPanel.add(word);
+            System.out.println("word proper");
+            letters.removeAll();
+            lettersTable.removeAll();
+            addLetters();
+            lettersPanel.revalidate();
+
+        } else if ("FAILURE".equals(split.get(2))) {
+            JLabel word = new JLabel(enterTextField.getText());
+            word.setBackground(Color.RED);
+            wordsPanel.add(word);
+            System.out.println("word not proper");
+            lettersPanel.revalidate();
+
+        }
+        wordsPanel.revalidate();
+        validate();
+    }
+
+}
 }

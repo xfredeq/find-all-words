@@ -2,6 +2,7 @@ package put.poznan.GUI;
 
 import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
+import put.poznan.tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -179,12 +180,14 @@ public class VoteView extends MyView implements ActionListener {
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
 
-            if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
+            if ("COUNTDOWN".equals(split.get(2))) {
                 timerLabel.setText("Game starts in...");
                 timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                 timer.start();
             }
-            if ("NOTIFICATION_START_GAME".equals(response)) {
+            if ("GAME".equals(split.get(2))) {
+                PropertiesHandler.setProperty("game_duration", split.get(3));
+                PropertiesHandler.saveProperties();
                 timer.stop();
                 b.doClick();
 
