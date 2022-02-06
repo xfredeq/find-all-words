@@ -7,6 +7,9 @@ Player::Player(int fd) : _fd(fd), handlingThread()
     this->playerEpollFd = epoll_create1(0);
     this->lobby = nullptr;
     this->inLobby = false;
+    this->inGame = false;
+    this->votedStart = false;
+    this->points = 0;
 }
 
 Player::~Player()
@@ -27,6 +30,7 @@ void Player::write(char *buffer, int count)
         dataToWrite.emplace_back(buffer, count);
         return;
     }
+    cout << "WRITE: " << this_thread::get_id() << endl;
     int sent = send(_fd, buffer, count, MSG_DONTWAIT);
     if (sent == count)
         return;
@@ -69,6 +73,26 @@ void Player::changeLobbyState()
     this->inLobby = !this->inLobby;
 }
 
+void Player::changeVoteState()
+{
+    this->votedStart = !this->votedStart;
+}
+
+bool Player::getVote()
+{
+    return this->votedStart;
+}
+
+void Player::setVote(bool vote)
+{
+    this->votedStart = vote;
+}
+
+void Player::changeGameState()
+{
+    this->inGame = !this->inGame;
+}
+
 void Player::waitForEvents()
 {
     epoll_event ee{EPOLLIN | EPOLLRDHUP, {.ptr = this}};
@@ -83,7 +107,7 @@ void Player::waitForEvents()
 
         if (ee.data.ptr == this)
         {
-            cout << "player waiter" << endl;
+            cout << "WAITER: " << this_thread::get_id() << endl;
             ((Handler *)ee.data.ptr)->handleEvent(ee.events);
         }
         cout << " player event" << endl;
@@ -163,6 +187,7 @@ void Player::handleEvent(uint32_t events)
 void Player::processRequests(int fd, char *buffer, int length)
 {
     // "TYP_zadanie_dane_@"
+    cout << "PROCESS: " << this_thread::get_id() << endl;
 
     string request(buffer, buffer + length);
     char *type = new char[10];
@@ -190,128 +215,108 @@ void Player::processRequests(int fd, char *buffer, int length)
     strcpy(subType, request.substr(0, index).c_str());
     request = request.substr(index + 1);
 
-    if (!this->inLobby) // PLAYER OUT OF LOBBY
+    if (!this->inGame) // PLAYER OUT OF GAME
     {
-        if (strcmp("SET", type) == 0)
+        if (!this->inLobby) // PLAYER OUT OF LOBBY
         {
-            cout << type << endl;
-            if (strcmp("NICKNAME", subType) == 0)
+            if (strcmp("SET", type) == 0)
             {
-                char *nickname = new char[20];
-
-                index = request.find("_");
-                if (index < 1)
+                cout << type << endl;
+                if (strcmp("NICKNAME", subType) == 0)
                 {
-                    delete nickname;
-                    delete type;
-                    delete subType;
-                    return;
-                }
+                    char *nickname = new char[20];
 
-                strcpy(nickname, request.substr(0, index).c_str());
-                this->nickname = string(nickname);
-
-                string response = "RESPONSE_NICKNAME_SUCCESS_" + this->nickname + "\n";
-                this->write((char *)response.c_str(), response.length());
-            }
-        }
-        else if (strcmp("GET", type) == 0)
-        {
-            if (strcmp("LOBBYSIZE", subType) == 0)
-            {
-                string response = "RESPONSE_LOBBYSIZE_" + to_string(lobbySize) + "\n";
-                this->write((char *)response.c_str(), response.length());
-            }
-            else if (strcmp("LOBBIES", subType) == 0)
-            {
-                string response = "RESPONSE_" + constructLobbiesMessage();
-
-                this->write((char *)response.c_str(), response.length());
-            }
-        }
-        else if (strcmp("LOBBY", type) == 0)
-        {
-            if (strcmp("CREATE", subType) == 0)
-            {
-                Lobby *lobby = new Lobby(lobbyNumber++);
-                lobbies.insert(lobby);
-                string response = "RESPONSE_LOBBY_CREATE_SUCCESS_" + to_string(lobby->getNumber()) + '\n';
-
-                this->lobby = lobby;
-                lobby->addPlayer(this);
-                this->write((char *)response.c_str(), response.length());
-            }
-            else if (strcmp("JOIN", subType) == 0)
-            {
-                int number;
-                char *nr = new char[10];
-
-                index = request.find("_");
-                if (index < 1)
-                {
-                    delete nr;
-                    delete type;
-                    delete subType;
-                    return;
-                }
-
-                strcpy(nr, request.substr(0, index).c_str());
-
-                number = atoi(nr);
-                Lobby *lobby = nullptr;
-
-                for (auto l : lobbies)
-                {
-                    if (l->getNumber() == number)
+                    index = request.find("_");
+                    if (index < 1)
                     {
-                        lobby = l;
-                        break;
+                        delete nickname;
+                        delete type;
+                        delete subType;
+                        return;
+                    }
+
+                    strcpy(nickname, request.substr(0, index).c_str());
+                    string response = "RESPONSE_NICKNAME_";
+                    this->nickname = string(nickname);
+                    if (checkNicknameUniquness(nickname, this))
+                    {
+                        response += "SUCCESS_" + this->nickname + "\n";
+                    }
+                    else
+                    {
+                        response += "FAILURE_" + this->nickname + "\n";
+                    }
+                    this->write((char *)response.c_str(), response.length());
+                }
+            }
+            else if (strcmp("GET", type) == 0)
+            {
+                if (strcmp("LOBBYSIZE", subType) == 0)
+                {
+                    string response = "RESPONSE_LOBBYSIZE_" + to_string(lobbySize) + "\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
+                else if (strcmp("LOBBIES", subType) == 0)
+                {
+                    string response = "RESPONSE_" + constructLobbiesMessage();
+
+                    this->write((char *)response.c_str(), response.length());
+                }
+            }
+            else if (strcmp("LOBBY", type) == 0)
+            {
+                if (strcmp("CREATE", subType) == 0)
+                {
+                    Lobby *lobby = new Lobby(lobbyNumber++);
+                    lobbies.insert(lobby);
+                    string response = "RESPONSE_LOBBY_CREATE_SUCCESS_" + to_string(lobby->getNumber()) + '\n';
+
+                    this->lobby = lobby;
+                    lobby->addPlayer(this);
+                    this->write((char *)response.c_str(), response.length());
+                }
+                else if (strcmp("JOIN", subType) == 0)
+                {
+                    int number;
+                    char *nr = new char[10];
+
+                    index = request.find("_");
+                    if (index < 1)
+                    {
+                        delete nr;
+                        delete type;
+                        delete subType;
+                        return;
+                    }
+
+                    strcpy(nr, request.substr(0, index).c_str());
+
+                    number = atoi(nr);
+                    Lobby *lobby = nullptr;
+
+                    for (auto l : lobbies)
+                    {
+                        if (l->getNumber() == number)
+                        {
+                            lobby = l;
+                            break;
+                        }
+                    }
+                    string response;
+
+                    if (lobby != nullptr)
+                    {
+                        response = "RESPONSE_LOBBY_JOIN_SUCCESS_" + to_string(number) + "\n";
+                        this->lobby = lobby;
+                        this->lobby->addPlayer(this);
+                        this->write((char *)response.c_str(), response.length());
+                    }
+                    else
+                    {
+                        response = "RESPONSE_LOBBY_JOIN_FAILURE_" + to_string(number) + "\n";
+                        this->write((char *)response.c_str(), response.length());
                     }
                 }
-                string response;
-
-                if (lobby != nullptr)
-                {
-                    response = "RESPONSE_LOBBY_JOIN_SUCCESS_" + to_string(number) + "\n";
-                    this->lobby = lobby;
-                    this->lobby->addPlayer(this);
-                    this->write((char *)response.c_str(), response.length());
-                }
-                else
-                {
-                    response = "RESPONSE_LOBBY_JOIN_FAILURE_" + to_string(number) + "\n";
-                    this->write((char *)response.c_str(), response.length());
-                }
-            }
-        }
-        else
-        {
-            string response = "RESPONSE_BAD_REQUEST\n";
-            this->write((char *)response.c_str(), response.length());
-        }
-    }
-    else // PLAYER IN LOBBY
-    {
-        if (strcmp("SUBMIT", type) == 0)
-        {
-            if (strcmp("WORD", subType) == 0)
-            {
-                string response = "RESPONSE_SUBMIT_WORD_SUCCESS\n";
-                this->write((char *)response.c_str(), response.length());
-            }
-        }
-
-        else if (strcmp("LOBBY", type) == 0)
-        {
-            if (strcmp("LEAVE", subType) == 0)
-            {
-                string response = "RESPONSE_LOBBY_LEAVE_SUCCESS_" + to_string(this->lobby->getNumber()) + "\n";
-
-                this->write((char *)response.c_str(), response.length());
-                cout << "leave sent: " << response << endl;
-
-                this->lobby->removePlayer(this);
-                this->lobby = nullptr;
             }
             else
             {
@@ -319,11 +324,63 @@ void Player::processRequests(int fd, char *buffer, int length)
                 this->write((char *)response.c_str(), response.length());
             }
         }
-        else
+        else // PLAYER IN LOBBY
         {
-            string response = "RESPONSE_BAD_REQUEST\n";
-            this->write((char *)response.c_str(), response.length());
+            if (strcmp("SUBMIT", type) == 0)
+            {
+                if (strcmp("WORD", subType) == 0)
+                {
+                    string response = "RESPONSE_SUBMIT_WORD_SUCCESS\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
+            }
+
+            else if (strcmp("LOBBY", type) == 0)
+            {
+                if (strcmp("LEAVE", subType) == 0)
+                {
+                    string response = "RESPONSE_LOBBY_LEAVE_SUCCESS_" + to_string(this->lobby->getNumber()) + "\n";
+
+                    this->write((char *)response.c_str(), response.length());
+                    cout << "leave sent: " << response << endl;
+
+                    this->lobby->removePlayer(this);
+                    this->lobby = nullptr;
+                }
+                else if (strcmp("VOTE", subType) == 0)
+                {
+                    this->changeVoteState();
+                    string response = "RESPONSE_LOBBY_VOTE_SUCCESS_" + to_string(this->votedStart) + "\n";
+                    this->write((char *)response.c_str(), response.length());
+                    this->notifyAllInLobby();
+
+                    if (this->lobby->checkGameStart())
+                    {
+                        cout << "GAME STARTS" << endl;
+                        this->lobby->startCountdownThread();
+                    }
+                }
+                else if (strcmp("PLAYERS", subType) == 0)
+                {
+                    string response = "NOTIFICATION_" + constructLobbyMessage(this->lobby);
+                    this->write((char *)response.c_str(), response.length());
+                }
+
+                else
+                {
+                    string response = "RESPONSE_BAD_REQUEST\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
+            }
+            else
+            {
+                string response = "RESPONSE_BAD_REQUEST\n";
+                this->write((char *)response.c_str(), response.length());
+            }
         }
+    }
+    else // PLAYER IN GAME
+    {
     }
 
     delete type;
@@ -334,6 +391,15 @@ void Player::notifyAllWaiting()
 {
     string notification = "NOTIFICATION_" + constructLobbiesMessage();
     for (auto player : freePlayers)
+    {
+        player->write((char *)notification.c_str(), notification.length());
+    }
+}
+
+void Player::notifyAllInLobby()
+{
+    string notification = "NOTIFICATION_" + constructLobbyMessage(this->lobby);
+    for (auto player : this->lobby->getPlayers())
     {
         player->write((char *)notification.c_str(), notification.length());
     }

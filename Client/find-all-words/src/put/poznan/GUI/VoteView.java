@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.Arrays;
@@ -19,7 +18,7 @@ public class VoteView extends MyView implements ActionListener {
 
     private JPanel choicePanel;
 
-    private JButton b;
+    private JButton fakeButton;
 
     private JPanel playersPanel;
     private JLabel playersListLabel;
@@ -53,6 +52,7 @@ public class VoteView extends MyView implements ActionListener {
 
         this.timer = new GameTimer();
         this.timerLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
+        this.timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         this.playersListLabel = new JLabel("Players in lobby:", SwingConstants.CENTER);
         this.playersListLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -78,8 +78,8 @@ public class VoteView extends MyView implements ActionListener {
         this.cancel = new JButton("leave lobby");
         this.previousViewButton = this.cancel;
 
-        this.b = new JButton();
-        this.nextViewButton = b;
+        this.fakeButton = new JButton();
+        this.nextViewButton = fakeButton;
 
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
@@ -129,6 +129,10 @@ public class VoteView extends MyView implements ActionListener {
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         String response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
         System.out.println(Arrays.toString(response.split("_")));
+        this.updatePlayersList.cancel(true);
+        this.updateTimer.cancel(true);
+        this.timer.stop();
+
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -169,8 +173,6 @@ public class VoteView extends MyView implements ActionListener {
                     }
                 }
             }
-
-
             return null;
         }
 
@@ -181,13 +183,14 @@ public class VoteView extends MyView implements ActionListener {
             split = new ArrayList<>(List.of(response.split("_")));
 
             if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
+                vote.setEnabled(false);
                 timerLabel.setText("Game starts in...");
                 timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                 timer.start();
             }
             if ("NOTIFICATION_START_GAME".equals(response)) {
                 timer.stop();
-                b.doClick();
+                fakeButton.doClick();
 
             }
 
