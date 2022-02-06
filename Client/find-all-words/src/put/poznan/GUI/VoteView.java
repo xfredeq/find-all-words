@@ -2,6 +2,7 @@ package put.poznan.GUI;
 
 import put.poznan.networking.ConnectionHandler;
 import put.poznan.tools.MyView;
+import put.poznan.tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -192,6 +193,8 @@ public class VoteView extends MyView implements ActionListener {
             }
             if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
                 timer.stop();
+                PropertiesHandler.setProperty("game_duration", split.get(3));
+                PropertiesHandler.saveProperties();
                 fakeButton.doClick();
 
             }

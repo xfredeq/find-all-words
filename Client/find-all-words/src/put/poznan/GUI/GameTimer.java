@@ -52,7 +52,7 @@ public class GameTimer extends JPanel {
 
     public GameTimer() {
         currentTime.setForeground(Color.BLACK);
-
+        this.currentTime.setFont(new Font("Monospaced", Font.BOLD, 20));
         setOpaque(false);
 
         add(currentTime);
