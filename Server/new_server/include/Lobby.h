@@ -14,6 +14,9 @@ private:
     int lobbyEpollFd;
     unordered_set<Player *> lobbyPlayers;
 
+    thread countdownThread;
+    thread GameThread;
+
 public:
     Lobby(int);
     ~Lobby();
@@ -27,6 +30,20 @@ public:
 
     void addPlayer(Player *player);
     void removePlayer(Player *player);
+
+    unordered_set<Player *> getPlayers();
+
+    bool checkGameStart();
+
+    void startCountdownThread();
+
+    void startGame();
+
+    void game();
+
+    void round();
+
+    void calculateResults();
 
 };
 

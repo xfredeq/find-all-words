@@ -148,7 +148,8 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     }
                     ConnectionHandler.readMessages();
                 } else if (i == 3) {
-                    String response = ConnectionHandler.sendRequest2("GET_LOBBYSIZE_@", "lobbySize");
+                    String response = ConnectionHandler.sendRequest2(
+                            "GET_LOBBYSIZE_@", "lobbySize");
 
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);

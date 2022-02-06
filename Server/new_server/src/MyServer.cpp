@@ -3,6 +3,10 @@
 int lobbySize;
 int lobbyNumber;
 
+int roundsNumber = 3;
+int roundDuration = 180;
+int wordInterval = 1;
+
 int serverSocket;
 int mainEpollFd;
 
@@ -40,6 +44,7 @@ public:
 
 int main(int argc, char **argv)
 {
+    cout<<"MAIN: "<<this_thread::get_id()<<endl;
     if (argc < 3)
         error(1, 0, "Need 2 arg (port, lobby size)");
     auto port = readArgument(argv[1], true);
@@ -150,4 +155,51 @@ string constructLobbiesMessage()
 
     message += '\n';
     return message;
+}
+
+string constructLobbyMessage(Lobby *lobby)
+{
+    string message = "LOBBY_PLAYERS_" + to_string(lobby->getPlayersNumber()) + "_";
+    for (auto player : lobby->getPlayers())
+    {
+        message += player->getNickname() + "_" + to_string(player->getVote()) + "_";
+    }
+    message += '\n';
+    return message;
+}
+
+bool checkNicknameUniquness(char *nickname, Player *p)
+{
+    for (auto player : freePlayers)
+    {
+        cout << player->getNickname() << endl;
+        if (strcmp(nickname, (char *)player->getNickname().c_str()) == 0 && player != p)
+        {
+            cout << "f1" << endl;
+            return false;
+        }
+    }
+    for (auto lobby : lobbies)
+    {
+        for (auto player : lobby->getPlayers())
+        {
+            if (strcmp(nickname, (char *)player->getNickname().c_str()) == 0)
+            {
+                cout << "f2" << endl;
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+char getRandomChar()
+{
+    char c;
+    mt19937 gen((std::random_device()()));
+    uniform_int_distribution<uint8_t> letter(97, 122);
+
+    c = char(letter(gen));
+
+    return c;
 }

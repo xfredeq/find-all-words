@@ -9,18 +9,12 @@ public abstract class MyView extends JPanel {
     protected String previousViewName = "";
 
     protected JButton nextViewButton;
-
-    public JButton getSecondaryNextViewButton() {
-        return secondaryNextViewButton;
-    }
-
     protected JButton secondaryNextViewButton;
     protected JButton previousViewButton;
 
     public String getViewName() {
         return this.viewName;
     }
-
 
     public String getNextViewName() {
         return this.nextViewName;
@@ -34,6 +28,8 @@ public abstract class MyView extends JPanel {
     public JButton getNextViewButton() {
         return this.nextViewButton;
     }
+
+    public JButton getSecondaryNextViewButton() {return this.secondaryNextViewButton;}
 
 
     public JButton getPreviousViewButton() {

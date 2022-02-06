@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <thread>
+#include <random>
 
 #include <list>
 #include <signal.h>
@@ -20,12 +21,14 @@
 #include <netdb.h>
 #include <sys/epoll.h>
 
-
-
 using namespace std;
 
 extern int lobbySize;
 extern int lobbyNumber;
+
+extern int roundsNumber;
+extern int roundDuration;
+extern int wordInterval;
 
 extern int serverSocket;
 extern int mainEpollFd;
@@ -48,5 +51,10 @@ void sendToAllBut(int fd, char *buffer, int count);
 
 string constructLobbiesMessage();
 
+string constructLobbyMessage(Lobby *lobby);
+
+bool checkNicknameUniquness(char *nickname, Player *p);
+
+char getRandomChar();
 
 #endif

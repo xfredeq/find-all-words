@@ -16,6 +16,10 @@ class Player : public Handler
     string nickname;
 
     bool inLobby;
+    bool inGame;
+    bool votedStart;
+
+    int points;
 
     struct Buffer
     {
@@ -41,7 +45,7 @@ class Player : public Handler
 
     Buffer readBuffer;
     list<Buffer> dataToWrite;
-
+    
     thread handlingThread;
 
     Lobby *lobby;
@@ -70,7 +74,14 @@ public:
 
     void changeLobbyState();
 
+    void changeVoteState();
+    bool getVote();
+    void setVote(bool vote);
+
+    void changeGameState();
+
     void notifyAllWaiting();
+    void notifyAllInLobby();
 };
 
 #endif

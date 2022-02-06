@@ -20,7 +20,7 @@ public class VoteView extends MyView implements ActionListener {
 
     private JPanel choicePanel;
 
-    private JButton b;
+    private JButton fakeButton;
 
     private JPanel playersPanel;
     private JLabel playersListLabel;
@@ -80,6 +80,9 @@ public class VoteView extends MyView implements ActionListener {
         this.cancel = new JButton("leave lobby");
         this.previousViewButton = this.cancel;
 
+        this.fakeButton = new JButton();
+        this.nextViewButton = fakeButton;
+
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
         this.buttonPanel.setPreferredSize(new Dimension(400, 60));
@@ -89,8 +92,7 @@ public class VoteView extends MyView implements ActionListener {
         this.buttonPanel.add(Box.createHorizontalGlue());
         this.buttonPanel.add(this.cancel);
 
-        this.b = new JButton();
-        nextViewButton = b;
+
 
     }
 
@@ -129,6 +131,10 @@ public class VoteView extends MyView implements ActionListener {
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         String response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
         System.out.println(Arrays.toString(response.split("_")));
+        this.updatePlayersList.cancel(true);
+        this.updateTimer.cancel(true);
+        this.timer.stop();
+
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -169,8 +175,6 @@ public class VoteView extends MyView implements ActionListener {
                     }
                 }
             }
-
-
             return null;
         }
 
@@ -180,16 +184,17 @@ public class VoteView extends MyView implements ActionListener {
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
 
-            if ("COUNTDOWN".equals(split.get(2))) {
+            if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
+                vote.setEnabled(false);
                 timerLabel.setText("Game starts in...");
                 timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                 timer.start();
             }
-            if ("GAME".equals(split.get(2))) {
+            if ("NOTIFICATION_START_GAME".equals(response)) {
+                timer.stop();
                 PropertiesHandler.setProperty("game_duration", split.get(3));
                 PropertiesHandler.saveProperties();
-                timer.stop();
-                b.doClick();
+                fakeButton.doClick();
 
             }
 
@@ -223,7 +228,9 @@ public class VoteView extends MyView implements ActionListener {
             String response = chunks.get(chunks.size() - 1);
             List<String> split;
             playersPanel.removeAll();
+            playersPanel.revalidate();
             playersPanel.repaint();
+            validate();
             split = new ArrayList<>(List.of(response.split("_")));
             int count = Integer.parseInt(split.get(3));
             for (int i = 0; i < count; i++) {
