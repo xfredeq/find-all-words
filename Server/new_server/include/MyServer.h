@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <thread>
+#include <cmath>
 #include <random>
 
 #include <list>
@@ -13,6 +14,7 @@
 #include <error.h>
 #include <cstring>
 #include <string.h>
+#include <fstream>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -56,5 +58,7 @@ string constructLobbyMessage(Lobby *lobby);
 bool checkNicknameUniquness(char *nickname, Player *p);
 
 char getRandomChar();
+
+bool contains(list<char> listOfElements, char element);
 
 #endif

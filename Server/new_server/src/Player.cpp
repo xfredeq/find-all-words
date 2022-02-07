@@ -380,11 +380,26 @@ void Player::processRequests(int fd, char *buffer, int length)
     }
     else // PLAYER IN GAME
     {
-        if (strcmp("SUBMIT", type) == 0)
+        if (strcmp("CHECK", type) == 0)
         {
             if (strcmp("WORD", subType) == 0)
             {
-                string response = "RESPONSE_SUBMIT_WORD_SUCCESS\n";
+                char *word = new char[64];
+
+                index = request.find("_");
+                if (index < 1)
+                {
+                    delete word;
+                    delete type;
+                    delete subType;
+                    return;
+                }
+
+                strcpy(word, request.substr(0, index).c_str());
+
+                string m = this->lobby->checkWord(word, this);
+
+                string response = "RESPONSE_CHECK_WORD_" + m;
                 this->write((char *)response.c_str(), response.length());
             }
         }

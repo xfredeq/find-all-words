@@ -207,6 +207,7 @@ public class LobbyView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
+            System.out.println("lobbies message: " + response);
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
             int count = Integer.parseInt(split.get(3));

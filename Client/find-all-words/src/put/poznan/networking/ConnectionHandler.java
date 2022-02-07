@@ -48,7 +48,7 @@ public class ConnectionHandler {
         responseTable.put("selfVote", new Triplet("RESPONSE_LOBBY_VOTE_.{7}_[0-1]"));
         responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
         responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME_[0-9]+"));
-        responseTable.put("checkWord", new Triplet("RESPONSE_WORD_.{7}"));
+        responseTable.put("checkWord", new Triplet("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
         responseTable.put("wordsList", new Triplet("NOTIFICATION_WORDS_.{7}_.{2,}.*"));
         responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
     }
@@ -125,11 +125,8 @@ public class ConnectionHandler {
 
     public static String sendRequest2(String request, String type) {
         out.print(request);
-        System.out.println("po print" + request);
         out.flush();
-        System.out.println("po flush" + request);
         Object lock = ConnectionHandler.responseTable.get(type).lock;
-        System.out.println("po lock" + request);
         synchronized (lock) {
             try {
                 lock.wait();

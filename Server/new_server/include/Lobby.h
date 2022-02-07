@@ -17,11 +17,14 @@ private:
 
     unordered_set<Player *> lobbyPlayers;
 
+    unordered_set<char *> guessedWords;
+
     thread countdownThread;
     thread GameThread;
 
 public:
     Lobby(int);
+    ~Lobby();
 
     int getNumber();
     int getPlayersNumber();
@@ -48,6 +51,12 @@ public:
     void round();
 
     void calculateResults();
+
+    string checkWord(char *word, Player *player);
+
+    int assesWord(int length);
+
+    bool existsWord(char *w);
 };
 
 #endif

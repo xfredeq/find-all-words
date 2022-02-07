@@ -334,9 +334,9 @@ public class GameView extends MyView implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
         String response;
         if (ae.getActionCommand().equals("Submit")) {
-            response = ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord");
+            response = ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText() + "_@", "checkWord");
 
-            if (response.matches("RESPONSE_WORD_.{7}")) {
+            if (response.matches("RESPONSE_CHECK_WORD_.{7}_[0-9]+")) {
 
                 wordsPanel.add(new JLabel(enterTextField.getText()));
                 for (int i = 0; i < enterTextField.getText().length(); i++) {
@@ -452,7 +452,6 @@ private class UpdateData extends SwingWorker<Void, String> {
     @Override
     protected Void doInBackground() {
 
-        publish(ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord"));
         while (!isCancelled()) {
             Object lock = ConnectionHandler.responseTable.get("checkWord").lock;
             synchronized (lock) {

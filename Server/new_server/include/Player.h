@@ -1,7 +1,6 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Lobby.h"
 #include "Handler.h"
 #include "MyServer.h"
 
@@ -20,7 +19,7 @@ class Player : public Handler
     bool votedStart;
 
     int points;
-
+    
     struct Buffer
     {
         Buffer() { data = (char *)malloc(len); }
@@ -45,7 +44,7 @@ class Player : public Handler
 
     Buffer readBuffer;
     list<Buffer> dataToWrite;
-    
+
     thread handlingThread;
 
     Lobby *lobby;
@@ -85,6 +84,9 @@ public:
 
     int getPoints();
     void setPoints(int points);
+
+
+
 };
 
 #endif

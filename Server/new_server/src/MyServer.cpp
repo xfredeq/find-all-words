@@ -5,7 +5,7 @@ int lobbyNumber;
 
 int roundsNumber = 3;
 int roundDuration = 180;
-int wordInterval = 1;
+int wordInterval = 3;
 
 int serverSocket;
 int mainEpollFd;
@@ -210,4 +210,11 @@ char getRandomChar()
     c = char(letter(gen));
 
     return c;
+}
+
+
+bool contains(list<char> listOfElements, char element)
+{
+    auto it = find(listOfElements.begin(), listOfElements.end(), element);
+    return it != listOfElements.end();
 }
