@@ -401,6 +401,7 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                 string response = "RESPONSE_CHECK_WORD_" + m;
                 this->write((char *)response.c_str(), response.length());
+                
             }
         }
         else if (strcmp("LOBBY", type) == 0)
@@ -413,6 +414,15 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                 this->lobby->removePlayer(this);
                 this->lobby = nullptr;
+            }
+        }
+        else if (strcmp("GAME", type) == 0)
+        {
+            if (strcmp("PLAYERS", subType) == 0)
+            {
+                string response = this->lobby->getRanking();
+
+                this->write((char *)response.c_str(), response.length());
             }
         }
     }

@@ -57,6 +57,9 @@ public:
     int assesWord(int length);
 
     bool existsWord(char *w);
+
+    string getRanking();
+    void notifyAboutWord(char* word, bool success);
 };
 
 #endif

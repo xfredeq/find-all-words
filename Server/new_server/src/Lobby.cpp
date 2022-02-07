@@ -100,11 +100,24 @@ void Lobby::game()
 {
     for (int i = 0; i < roundsNumber; i++)
     {
+        string notification = "NOTIFICATION_GAME_ROUND_" + to_string(i+1) + "_STARTS\n";
+        for (auto player : this->lobbyPlayers)
+        {
+            player->write((char *)notification.c_str(), notification.size());
+        }
+
         thread(&Lobby::round, this).join();
         if (this->lobbyPlayers.size() == 0)
         {
             return;
         }
+
+        notification = "NOTIFICATION_GAME_ROUND_" + to_string(i+1) + "_FINISHED\n";
+        for (auto player : this->lobbyPlayers)
+        {
+            player->write((char *)notification.c_str(), notification.size());
+        }
+        sleep(5);
     }
 
     this->calculateResults();
@@ -155,6 +168,7 @@ string Lobby::checkWord(char *word, Player *player)
     string result;
     if (!unique)
     {
+        player->setPoints(player->getPoints() - asses);
         return "FAILURE_" + to_string(asses) + "\n";
     }
     else
@@ -162,10 +176,12 @@ string Lobby::checkWord(char *word, Player *player)
         if (this->existsWord(word))
         {
             this->guessedWords.insert(word);
+            player->setPoints(player->getPoints() + asses);
             return "SUCCESS_" + to_string(asses) + "\n";
         }
         else
         {
+            player->setPoints(player->getPoints() - strlen(word));
             return "FAILURE_" + to_string(strlen(word)) + "\n";
         }
     }
@@ -203,4 +219,20 @@ unordered_set<Player *> Lobby::getPlayers()
 bool Lobby::gameInProgress()
 {
     return this->gameStarted;
+}
+
+string Lobby::getRanking()
+{
+    string response = "NOTIFICATION_GAME_PLAYERS_" + to_string(this->lobbyPlayers.size()) + "_";
+    for(auto player : this->lobbyPlayers)
+    {
+        response += player->getNickname() + "_" + to_string(player->getPoints()) + "_";
+    }
+    response += "\n";
+    return response;
+}
+
+void Lobby::notifyAboutWord(char* word, bool success)
+{
+    
 }
