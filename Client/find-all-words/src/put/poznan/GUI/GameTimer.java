@@ -1,5 +1,7 @@
 package put.poznan.GUI;
 
+import put.poznan.tools.PropertiesHandler;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -41,7 +43,7 @@ public class GameTimer extends JPanel {
     private int minutes = 0;
     private int seconds = 0;
     private int time = 0;
-    private JLabel currentTime = new JLabel();
+    private JLabel currentTime = new JLabel("--:--");
     private Timer timer = new Timer(1000, e -> {
         time -= 1000;
         if (time < 0) time = 0;
@@ -51,12 +53,15 @@ public class GameTimer extends JPanel {
     });
 
     public GameTimer() {
-        currentTime.setForeground(Color.BLACK);
+        this.currentTime.setText("--:--");
+
+        this.currentTime.setForeground(Color.BLACK);
         this.currentTime.setFont(new Font("Monospaced", Font.BOLD, 20));
         setOpaque(false);
 
         add(currentTime);
     }
+
 
     public void start() {
         timer.start();

@@ -49,7 +49,8 @@ public class ConnectionHandler {
         responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
         responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME_[0-9]+"));
         responseTable.put("checkWord", new Triplet("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
-        responseTable.put("wordsList", new Triplet("NOTIFICATION_WORDS_.{7}_.{2,}.*"));
+        responseTable.put("newLetter", new Triplet("NOTIFICATION_LETTER_[0-9]+"));
+        responseTable.put("wordsList", new Triplet("NOTIFICATION_WORD_.{7}_.+"));
         responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
     }
 
@@ -130,7 +131,7 @@ public class ConnectionHandler {
         synchronized (lock) {
             try {
                 lock.wait();
-                return ConnectionHandler.responseTable.get(type).response;
+                return ConnectionHandler.responseTable.get(type).messages.poll();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return null;
@@ -151,7 +152,7 @@ public class ConnectionHandler {
                         Triplet triplet = entry.getValue();
                         if (message.matches(triplet.regex)) {
                             synchronized (triplet.lock) {
-                                triplet.response = message;
+                                triplet.messages.add(message);
                                 triplet.lock.notifyAll();
                             }
                             break;

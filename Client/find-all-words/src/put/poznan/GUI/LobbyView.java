@@ -116,6 +116,7 @@ public class LobbyView extends MyView implements ActionListener {
         String nick = PropertiesHandler.getProperty("nickname");
         this.nickname.setText("Hi " + nick + ", join or create the game:");
 
+
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
         System.out.println("updater started");
@@ -194,7 +195,7 @@ public class LobbyView extends MyView implements ActionListener {
                 synchronized (lock) {
                     try {
                         lock.wait();
-                       publish(ConnectionHandler.responseTable.get("lobbies").response);
+                       publish(ConnectionHandler.responseTable.get("lobbies").messages.poll());
                     } catch (InterruptedException e) {
                         //e.printStackTrace();
                         return null;
