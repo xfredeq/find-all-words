@@ -116,6 +116,7 @@ public class LobbyView extends MyView implements ActionListener {
         String nick = PropertiesHandler.getProperty("nickname");
         this.nickname.setText("Hi " + nick + ", join or create the game:");
 
+
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
         System.out.println("updater started");

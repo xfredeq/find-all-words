@@ -8,10 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class VoteView extends MyView implements ActionListener {
 
@@ -52,9 +51,11 @@ public class VoteView extends MyView implements ActionListener {
         title.setForeground(Color.BLUE);
         title.setOpaque(true);
 
-        this.timer = new GameTimer();
+
         this.timerLabel = new JLabel("Waiting for players...", SwingConstants.CENTER);
         this.timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        this.timer = new GameTimer();
 
         this.playersListLabel = new JLabel("Players in lobby:", SwingConstants.CENTER);
         this.playersListLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -81,7 +82,7 @@ public class VoteView extends MyView implements ActionListener {
         this.previousViewButton = this.cancel;
 
         this.fakeButton = new JButton();
-        this.nextViewButton = fakeButton;
+        this.nextViewButton = this.fakeButton;
 
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new GridLayout(1, 3));
@@ -119,6 +120,9 @@ public class VoteView extends MyView implements ActionListener {
     @Override
     public void onShowAction() {
         System.out.println("List of nicks updater started0");
+        this.timer.setVisible(false);
+
+        this.vote.setEnabled(true);
         this.updatePlayersList = new UpdatePlayersList();
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
@@ -133,6 +137,7 @@ public class VoteView extends MyView implements ActionListener {
         System.out.println(Arrays.toString(response.split("_")));
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
+
         this.timer.stop();
 
         super.returnToPreviousView(cardLayout, cardPane);
@@ -183,15 +188,19 @@ public class VoteView extends MyView implements ActionListener {
             String response = chunks.get(chunks.size() - 1);
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
-
-            if ("NOTIFICATION_START_COUNTDOWN_10".equals(response)) {
-                vote.setEnabled(false);
-                timerLabel.setText("Game starts in...");
+            System.out.println(split);
+            if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
                 timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                 timer.start();
+                vote.setEnabled(false);
+                timerLabel.setText("Game starts in...");
+
+                timer.setVisible(true);
             }
-            if ("NOTIFICATION_START_GAME".equals(response)) {
+            if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
                 timer.stop();
+                timer.setTime(Integer.parseInt(PropertiesHandler.getProperty("game_duration")));
+                timer.setCurrentTime(new JLabel(""));
                 PropertiesHandler.setProperty("game_duration", split.get(3));
                 PropertiesHandler.saveProperties();
                 fakeButton.doClick();

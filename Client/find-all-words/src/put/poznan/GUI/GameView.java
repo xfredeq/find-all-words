@@ -48,8 +48,8 @@ public class GameView extends MyView implements ActionListener {
     private UpdatePlayersList updatePlayersList;
 
     private ArrayList<Character> lettersList = new ArrayList<Character>(List.of(
-            'w', 'a', ' ', ' ', ' ', ' ',
-            'o', 'a', ' ', ' ', ' ', ' ',
+            'w', 'a', 'o', 'r', 'd', ' ',
+            'o', 'a', 'p', 'r', 'd', 'w',
             'r', 'a', ' ', ' ', ' ', ' ',
             'd', 'a', ' ', ' ', ' ', ' ',
             'w', ' ', ' ', ' ', ' ', ' ',
@@ -66,20 +66,21 @@ public class GameView extends MyView implements ActionListener {
     }
 
     private void addLetters() {
-        int k = 0;
+
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
 
                 GridBagConstraints l = new GridBagConstraints();
-                l.gridx = i;
-                l.gridy = j;
+                l.gridx = j;
+                l.gridy = i;
                 l.weightx = 1;
                 l.weighty = 1;
 
 
-                System.out.println(this.lettersList);
-                this.letters.add(new JLabel(this.lettersList.get(k).toString()), l);
-                k++;
+                //System.out.println(this.lettersList);
+                this.letters.add(new JLabel(this.lettersList.get(6 * i + j).toString()), l);
+
+
                 this.letters.revalidate();
 
                 this.lettersTable.add(new JScrollPane(this.letters), BorderLayout.CENTER);
@@ -88,7 +89,7 @@ public class GameView extends MyView implements ActionListener {
         }
     }
 
-    private void updatePlayers(){
+    private void updatePlayers() {
         this.playersPanel.setBackground(new Color(172, 240, 248));
         this.playersPanel.setLayout(new BoxLayout(this.playersPanel, BoxLayout.Y_AXIS));
         this.playersTitle = new JLabel("Opponents:", SwingConstants.CENTER);
@@ -325,33 +326,66 @@ public class GameView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
-        //this.updateData = new UpdateData();
-        //this.updateData.execute();
+        this.updateData = new UpdateData();
+        this.updateData.execute();
         System.out.println("Game data updated");
     }
 
     @Override
     public void actionPerformed(ActionEvent ae) {
         String response;
+        boolean wrongLetters = false;
+
         if (ae.getActionCommand().equals("Submit")) {
-            response = ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord");
-
-            if (response.matches("RESPONSE_WORD_.{7}")) {
-
-                wordsPanel.add(new JLabel(enterTextField.getText()));
-                for (int i = 0; i < enterTextField.getText().length(); i++) {
-                    System.out.println("letter removed" + enterTextField.getText().charAt(i));
-                    this.lettersList.remove((Character) enterTextField.getText().charAt(i));
-                    this.lettersList.add(' ');
-                    System.out.println(this.lettersList);
+            ArrayList<Character> lettersListCopy = new ArrayList<>(lettersList);
+            for (int i = 0; i < enterTextField.getText().length(); i++) {
+                if (!lettersListCopy.remove((Character) enterTextField.getText().charAt(i))) {
+                    wrongLetters = true;
+                    break;
                 }
-                this.letters.removeAll();
-                this.lettersTable.removeAll();
-                addLetters();
-
-                System.out.println("word proper");
-                wordsPanel.revalidate();
             }
+            if (!wrongLetters) {
+                response = ConnectionHandler.sendRequest2("CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
+                if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
+
+                    for (int i = 0; i < enterTextField.getText().length(); i++) {
+                        //System.out.println("letter removed" + enterTextField.getText().charAt(i));
+                        this.lettersList.remove((Character) enterTextField.getText().charAt(i));
+                        this.lettersList.add(' ');
+                        //System.out.println(this.lettersList);
+                    }
+
+                    JLabel word = new JLabel(enterTextField.getText());
+                    word.setBackground(Color.GREEN);
+                    word.setOpaque(true);
+                    wordsPanel.add(word);
+                    System.out.println("word proper");
+                    letters.removeAll();
+                    lettersTable.removeAll();
+                    addLetters();
+
+
+
+
+                    //lettersPanel.revalidate();
+
+
+                    System.out.println("word proper");
+                    //wordsPanel.revalidate();
+                } else if (response.matches("RESPONSE_CHECK_WORD_FAILURE_[0-9]+")) {
+
+                    JLabel word = new JLabel(enterTextField.getText());
+                    word.setBackground(Color.RED);
+                    word.setOpaque(true);
+                    wordsPanel.add(word);
+                    System.out.println("word not proper");
+                    lettersPanel.revalidate();
+                }
+            } else {
+                JOptionPane.showConfirmDialog(this, "Wrong word!");
+                System.out.println("Wrong word");
+            }
+
 
         }
     }
@@ -369,7 +403,6 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "playersList"));
             while (!isCancelled()) {
                 Object lock = ConnectionHandler.responseTable.get("playersList").lock;
                 synchronized (lock) {
@@ -433,67 +466,68 @@ public class GameView extends MyView implements ActionListener {
             return null;
         }*/
 
-    @Override
-    protected void process(List<String> chunks) {
-        String response = chunks.get(chunks.size() - 1);
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
 
-        if (!"0".equals(response)) {
-            gameTimer.setTime(Integer.parseInt(response) * 1000 * 60);
-            gameTimer.start();
+            if (!"0".equals(response)) {
+                gameTimer.setTime(Integer.parseInt(response) * 1000);
+                gameTimer.start();
+            }
+
         }
 
     }
 
-}
 
+    private class UpdateData extends SwingWorker<Void, String> {
 
-private class UpdateData extends SwingWorker<Void, String> {
-
-    @Override
-    protected Void doInBackground() {
-
-        publish(ConnectionHandler.sendRequest2("CHECK_WORD_"+enterTextField.getText(), "checkWord"));
-        while (!isCancelled()) {
-            Object lock = ConnectionHandler.responseTable.get("checkWord").lock;
-            synchronized (lock) {
-                try {
-                    lock.wait();
-                    publish(ConnectionHandler.responseTable.get("checkWord").response);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    return null;
+        @Override
+        protected Void doInBackground() {
+            while (!isCancelled()) {
+                if (lettersList.contains(' ')) {
+                    Object lock = ConnectionHandler.responseTable.get("newLetter").lock;
+                    synchronized (lock) {
+                        try {
+                            lock.wait();
+                            publish(ConnectionHandler.responseTable.get("newLetter").response);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    }
                 }
             }
+            return null;
         }
-        return null;
-    }
 
-    @Override
-    protected void process(List<String> chunks) {
-        String response = chunks.get(chunks.size() - 1);
-        List<String> split;
-        split = new ArrayList<>(List.of(response.split("_")));
-        if ("SUCCESS".equals(split.get(2))) {
-            JLabel word = new JLabel(enterTextField.getText());
-            word.setBackground(Color.GREEN);
-            wordsPanel.add(word);
-            System.out.println("word proper");
-            letters.removeAll();
-            lettersTable.removeAll();
-            addLetters();
-            lettersPanel.revalidate();
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
 
-        } else if ("FAILURE".equals(split.get(2))) {
-            JLabel word = new JLabel(enterTextField.getText());
-            word.setBackground(Color.RED);
-            wordsPanel.add(word);
-            System.out.println("word not proper");
-            lettersPanel.revalidate();
+            List<String> split;
+            split = new ArrayList<>(List.of(response.split("_")));
+            if (response.matches("NOTIFICATION_LETTER_[0-9]+")) {
+                System.out.println("letter received!!----------" + ((char) Integer.parseInt(split.get(2))));
 
+
+                for (int i = 0; i < lettersList.size(); i++) {
+                    if (lettersList.get(i).equals(' ')) {
+                        letters.removeAll();
+                        lettersTable.removeAll();
+                        addLetters();
+                        lettersPanel.revalidate();
+                        lettersList.set(i, ((char) Integer.parseInt(split.get(2))));
+                        break;
+                    }
+                }
+                letters.removeAll();
+                lettersTable.removeAll();
+                addLetters();
+
+
+            }
         }
-        wordsPanel.revalidate();
-        validate();
-    }
 
-}
+    }
 }
