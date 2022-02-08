@@ -83,6 +83,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void onShowAction() {
+        this.enter.setVisible(false);
         System.out.println("on show start");
         semaphore = new Semaphore(0);
         semaphore2 = new Semaphore(0);
@@ -162,12 +163,27 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     String[] split = response.split("_");
 
                     if ("SUCCESS".equals(split[split.length - 2])) {
+                        enter.setVisible(true);
                         PropertiesHandler.setProperty("nickname", split[split.length - 1]);
                         PropertiesHandler.saveProperties();
                         System.out.println(response);
                     } else {
+                        enter.setVisible(false);
                         System.out.println("NOT UNIQUE NICK");
+                        /*JDialog dialog = new JDialog(null, "ACHTUNG!", Dialog.ModalityType.MODELESS);
+                        JOptionPane optionPane = new JOptionPane("Your nick is already used!", JOptionPane.ERROR_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+                        dialog.pack();
+                        dialog.setContentPane(optionPane);*/
+                        JOptionPane.showMessageDialog(
+                                JOptionPane.getFrameForComponent(null),
+                                "Your nick is already used!",
+                                "ACHTUNG!",
+                                JOptionPane.ERROR_MESSAGE);
+
+
                         returnToPreviousView(cardLayout, cardPane);
+
+
                         return null;
                     }
                 }

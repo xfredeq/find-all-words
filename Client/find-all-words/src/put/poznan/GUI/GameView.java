@@ -1,6 +1,7 @@
 package put.poznan.GUI;
 
 import put.poznan.networking.ConnectionHandler;
+import put.poznan.tools.ComparePoints;
 import put.poznan.tools.MyView;
 import put.poznan.tools.PropertiesHandler;
 
@@ -8,7 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class GameView extends MyView implements ActionListener {
@@ -41,9 +42,8 @@ public class GameView extends MyView implements ActionListener {
 
     private UpdateData updateData;
     private UpdateTimer updateTimer;
-    private UpdatePlayersList updatePlayersList;
 
-    private ArrayList<Character> lettersList = new ArrayList<Character>(List.of(
+    private final ArrayList<Character> lettersList = new ArrayList<>(List.of(
             'w', 'a', 'o', 'r', 'd', ' ',
             'o', 'a', 'p', 'r', 'd', 'w',
             'r', 'a', ' ', ' ', ' ', ' ',
@@ -98,6 +98,17 @@ public class GameView extends MyView implements ActionListener {
         this.playersPanel.add(this.playersTitle);
     }
 
+    private void updateWords() {
+        this.wordsTitle = new JLabel("Words guessed:", SwingConstants.CENTER);
+        this.wordsTitle.setAlignmentX(Box.CENTER_ALIGNMENT);
+        this.wordsTitle.setMaximumSize(new Dimension(180, 40));
+        this.wordsTitle.setPreferredSize(new Dimension(180, 40));
+        this.wordsTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        this.wordsTitle.setBackground(new Color(255, 199, 211));
+
+        this.wordsPanel.add(this.wordsTitle);
+    }
+
     private void setComponents() {
         this.viewName = "GameView";
         this.nextViewName = "LobbyView";
@@ -109,12 +120,7 @@ public class GameView extends MyView implements ActionListener {
         this.wordsPanel.setPreferredSize(new Dimension(80, 40));
         this.wordsPanel.setLayout(new BoxLayout(this.wordsPanel, BoxLayout.Y_AXIS));
 
-        this.wordsTitle = new JLabel("Words guessed:", SwingConstants.CENTER);
-        this.wordsTitle.setAlignmentX(Box.CENTER_ALIGNMENT);
-        this.wordsTitle.setMaximumSize(new Dimension(180, 40));
-        this.wordsTitle.setPreferredSize(new Dimension(180, 40));
-        this.wordsTitle.setFont(new Font("Arial", Font.BOLD, 20));
-        this.wordsTitle.setBackground(new Color(255, 199, 211));
+        updateWords();
 
         this.playersPanel = new JPanel();
         this.playersPanel.setBackground(new Color(172, 240, 248));
@@ -317,11 +323,6 @@ public class GameView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
-
-        this.updatePlayersList = new UpdatePlayersList();
-        this.updatePlayersList.execute();
-        this.updateTimer = new UpdateTimer();
-        this.updateTimer.execute();
         this.updateData = new UpdateData();
         this.updateData.execute();
         System.out.println("Game data updated");
@@ -332,7 +333,7 @@ public class GameView extends MyView implements ActionListener {
         String response;
         boolean wrongLetters = false;
 
-        if (ae.getActionCommand().equals("Submit")) {
+        if (ae.getActionCommand().equals("Submit") && enterTextField.getText().length() >= 2) {
             ArrayList<Character> lettersListCopy = new ArrayList<>(lettersList);
             for (int i = 0; i < enterTextField.getText().length(); i++) {
                 if (!lettersListCopy.remove((Character) enterTextField.getText().charAt(i))) {
@@ -350,93 +351,37 @@ public class GameView extends MyView implements ActionListener {
                         this.lettersList.add(' ');
                         //System.out.println(this.lettersList);
                     }
-
-                    JLabel word = new JLabel(enterTextField.getText());
-                    word.setBackground(Color.GREEN);
-                    word.setOpaque(true);
-                    wordsPanel.add(word);
-                    System.out.println("word proper");
+                    enterTextField.setText("");
                     letters.removeAll();
                     lettersTable.removeAll();
                     addLetters();
-
-
-                    //lettersPanel.revalidate();
-
-
                     System.out.println("word proper");
                     //wordsPanel.revalidate();
                 } else if (response.matches("RESPONSE_CHECK_WORD_FAILURE_[0-9]+")) {
 
-                    JLabel word = new JLabel(enterTextField.getText());
-                    word.setBackground(Color.RED);
-                    word.setOpaque(true);
-                    wordsPanel.add(word);
                     System.out.println("word not proper");
                     lettersPanel.revalidate();
                 }
             } else {
-                JOptionPane.showConfirmDialog(this, "Wrong word!");
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Wrong word! Not enough letters.",
+                        "ACHTUNG!",
+                        JOptionPane.WARNING_MESSAGE);
                 System.out.println("Wrong word");
             }
-
-
         }
     }
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         gameTimer.stop();
-        this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
         this.updateData.cancel(true);
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
-    private class UpdatePlayersList extends SwingWorker<Void, String> {
 
-        @Override
-        protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "playersList"));
-            while (!isCancelled()) {
-                Object lock = ConnectionHandler.responseTable.get("playersList").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("playersList").messages.poll());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-            return null;
-        }
-
-
-        @Override
-        protected void process(List<String> chunks) {
-            String response = chunks.get(chunks.size() - 1);
-            List<String> split;
-            playersPanel.removeAll();
-            playersPanel.repaint();
-            updatePlayers();
-            split = new ArrayList<>(List.of(response.split("_")));
-            int count = Integer.parseInt(split.get(3));
-            for (int i = 0; i < count; i++) {
-                String nick = split.get(4 + i * 2);
-                String score = split.get(5 + i * 2);
-                Color c = null;
-                JLabel l = new JLabel(nick + "   " + score, SwingConstants.CENTER);
-                l.setAlignmentX(Component.CENTER_ALIGNMENT);
-                l.setOpaque(true);
-                playersPanel.add(l);
-
-            }
-            playersPanel.revalidate();
-            validate();
-        }
-    }
 
     private class UpdateTimer extends SwingWorker<Void, String> {
 
@@ -444,22 +389,7 @@ public class GameView extends MyView implements ActionListener {
             publish(PropertiesHandler.getProperty("game_duration"));
             return null;
         }
-        /*@Override
-        protected Void doInBackground() {
-            while (!isCancelled()) {
-                String lock = PropertiesHandler.getProperty("game_duration");
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(PropertiesHandler.getProperty("game_duration"));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-            return null;
-        }*/
+
 
         @Override
         protected void process(List<String> chunks) {
@@ -479,49 +409,115 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
+            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "gameNotification"));
             while (!isCancelled()) {
-                if (lettersList.contains(' ')) {
-                    Object lock = ConnectionHandler.responseTable.get("newLetter").lock;
-                    synchronized (lock) {
-                        try {
-                            lock.wait();
-                            publish(ConnectionHandler.responseTable.get("newLetter").messages.poll());
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    }
+
+
+                while (ConnectionHandler.responseTable.get("gameNotification").messages.peek() != null) {
+                    System.out.println(ConnectionHandler.responseTable.get("gameNotification").messages.peek());
+                    publish(ConnectionHandler.responseTable.get("gameNotification").messages.poll());
+
                 }
             }
             return null;
         }
 
+
         @Override
         protected void process(List<String> chunks) {
-            String response = chunks.get(chunks.size() - 1);
+            for (var chunk : chunks) {
 
-            List<String> split;
-            split = new ArrayList<>(List.of(response.split("_")));
-            if (response.matches("NOTIFICATION_LETTER_[0-9]+")) {
-                System.out.println("letter received!!----------" + ((char) Integer.parseInt(split.get(2))));
-
-
-                for (int i = 0; i < lettersList.size(); i++) {
-                    if (lettersList.get(i).equals(' ')) {
+                System.out.println(chunk);
+                List<String> split;
+                split = new ArrayList<>(List.of(chunk.split("_")));
+                if ("LETTER".equals(split.get(2))) {
+                    if (lettersList.contains(' ')) {
+                        for (int i = 0; i < lettersList.size(); i++) {
+                            if (lettersList.get(i).equals(' ')) {
+                                letters.removeAll();
+                                lettersTable.removeAll();
+                                addLetters();
+                                lettersPanel.revalidate();
+                                lettersList.set(i, ((char) Integer.parseInt(split.get(3))));
+                                break;
+                            }
+                        }
                         letters.removeAll();
                         lettersTable.removeAll();
                         addLetters();
-                        lettersPanel.revalidate();
-                        lettersList.set(i, ((char) Integer.parseInt(split.get(2))));
-                        break;
                     }
+
+
+                } else if ("WORD".equals(split.get(2))) {
+                    JLabel word = new JLabel(split.get(4));
+                    //String result = split.get(3);
+                    if ("SUCCESS".equals(split.get(3))) {
+                        word.setBackground(Color.GREEN);
+                    } else {
+
+                        word.setBackground(Color.RED);
+                    }
+                    word.setOpaque(true);
+                    wordsPanel.add(word);
+                } else if ("PLAYERS".equals(split.get(2))) {
+                    playersPanel.removeAll();
+                    playersPanel.repaint();
+                    updatePlayers();
+                    int count = Integer.parseInt(split.get(3));
+
+                    Map<String,Integer> treeMap = new TreeMap<>();
+
+                    for (int i = 0; i < count; i++) {
+                        String nick = split.get(4 + i * 2);
+                        String score = split.get(5 + i * 2);
+                        treeMap.put(nick, Integer.parseInt(score));
+                        System.out.println(treeMap);
+
+                    }
+
+                    for (Map.Entry<String, Integer> string : ComparePoints.entriesSortedByValues(treeMap)) {
+                        JLabel l = new JLabel(string.getKey() + "   " + string.getValue(), SwingConstants.CENTER);
+                        l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        l.setOpaque(true);
+                        playersPanel.add(l);
+                    }
+
+                    playersPanel.revalidate();
+                    validate();
+                } else if ("ROUND".equals(split.get(2))) {
+
+                    String number = split.get(3);
+                    String state = split.get(4);
+                    if ("STARTS".equals(state)) {
+                        submit.setEnabled(true);
+                        updateTimer = new UpdateTimer();
+                        updateTimer.execute();
+
+                    } else if ("FINISHED".equals(state)) {
+                        submit.setEnabled(false);
+                        wordsPanel.removeAll();
+                        wordsPanel.repaint();
+                        wordsPanel.revalidate();
+                        validate();
+                        updateWords();
+                        gameTimer.setTime(0);
+                        gameTimer.stop();
+                        for (int i = 0; i < lettersList.size(); i++) {
+                            lettersList.set(i, ' ');
+                        }
+                        updateTimer.cancel(true);
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "Round " + number + " finished.\n" + "Starting round " + (Integer.parseInt(number) + 1) + " ...\n\n",
+                                "End of round.\n\n",
+                                JOptionPane.INFORMATION_MESSAGE
+                        );
+
+                    }
+
                 }
-                letters.removeAll();
-                lettersTable.removeAll();
-                addLetters();
-
-
             }
+
         }
 
     }
