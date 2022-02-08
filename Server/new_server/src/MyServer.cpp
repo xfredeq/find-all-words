@@ -147,7 +147,7 @@ string constructLobbiesMessage()
     string m = "";
     for (auto lobby : lobbies)
     {
-        if (!lobby->gameInProgress())
+        if (!lobby->gameInProgress() && lobby->getPlayersNumber() < lobbySize)
         {
             count++;
             tmp = true;
