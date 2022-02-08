@@ -401,7 +401,6 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                 string response = "RESPONSE_CHECK_WORD_" + m;
                 this->write((char *)response.c_str(), response.length());
-                
             }
         }
         else if (strcmp("LOBBY", type) == 0)

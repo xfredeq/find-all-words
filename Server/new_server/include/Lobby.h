@@ -59,7 +59,10 @@ public:
     bool existsWord(char *w);
 
     string getRanking();
-    void notifyAboutWord(char* word, bool success);
+
+    void notifyAboutWord(char *word, bool success);
+
+    void notifyAboutRanking();
 };
 
 #endif

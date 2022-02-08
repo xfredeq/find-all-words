@@ -49,8 +49,8 @@ public class ConnectionHandler {
         responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
         responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME_[0-9]+"));
         responseTable.put("checkWord", new Triplet("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
-        responseTable.put("newLetter", new Triplet("NOTIFICATION_LETTER_[0-9]+"));
-        responseTable.put("wordsList", new Triplet("NOTIFICATION_WORD_.{7}_.+"));
+        responseTable.put("newLetter", new Triplet("NOTIFICATION_GAME_LETTER_[0-9]+"));
+        responseTable.put("wordsList", new Triplet("NOTIFICATION_GAME_WORD_.{7}_.+"));
         responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
     }
 

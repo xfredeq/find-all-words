@@ -100,7 +100,7 @@ void Lobby::game()
 {
     for (int i = 0; i < roundsNumber; i++)
     {
-        string notification = "NOTIFICATION_GAME_ROUND_" + to_string(i+1) + "_STARTS\n";
+        string notification = "NOTIFICATION_GAME_ROUND_" + to_string(i + 1) + "_STARTS\n";
         for (auto player : this->lobbyPlayers)
         {
             player->write((char *)notification.c_str(), notification.size());
@@ -112,7 +112,7 @@ void Lobby::game()
             return;
         }
 
-        notification = "NOTIFICATION_GAME_ROUND_" + to_string(i+1) + "_FINISHED\n";
+        notification = "NOTIFICATION_GAME_ROUND_" + to_string(i + 1) + "_FINISHED\n";
         for (auto player : this->lobbyPlayers)
         {
             player->write((char *)notification.c_str(), notification.size());
@@ -126,7 +126,7 @@ void Lobby::game()
 void Lobby::round()
 {
     string notification;
-    for (int i = 0; i < roundDuration; i += wordInterval)
+    for (int i = 0; i <= roundDuration; i += wordInterval)
     {
         if (this->lobbyPlayers.size() == 1)
         {
@@ -140,7 +140,7 @@ void Lobby::round()
         }
         char c = getRandomChar();
         cout << i << " " << c << endl;
-        notification = "NOTIFICATION_LETTER_" + to_string((char)c) + "\n";
+        notification = "NOTIFICATION_GAME_LETTER_" + to_string((char)c) + "\n";
         for (auto player : this->lobbyPlayers)
         {
             player->write((char *)notification.c_str(), notification.size());
@@ -169,6 +169,8 @@ string Lobby::checkWord(char *word, Player *player)
     if (!unique)
     {
         player->setPoints(player->getPoints() - asses);
+        this->notifyAboutWord(word, false);
+        this->notifyAboutRanking();
         return "FAILURE_" + to_string(asses) + "\n";
     }
     else
@@ -177,11 +179,15 @@ string Lobby::checkWord(char *word, Player *player)
         {
             this->guessedWords.insert(word);
             player->setPoints(player->getPoints() + asses);
+            this->notifyAboutWord(word, true);
+            this->notifyAboutRanking();
             return "SUCCESS_" + to_string(asses) + "\n";
         }
         else
         {
             player->setPoints(player->getPoints() - strlen(word));
+            this->notifyAboutWord(word, false);
+            this->notifyAboutRanking();
             return "FAILURE_" + to_string(strlen(word)) + "\n";
         }
     }
@@ -197,8 +203,18 @@ int Lobby::assesWord(int length)
 bool Lobby::existsWord(char *w)
 {
     string word(w);
-    cout << word << endl;
-    return true;
+    FILE *p;
+
+    char result[100] = {0};
+
+    string res = "grep ^" + word + "$ /usr/share/dict/words";
+    p = popen(res.c_str(), "r");
+    fgets(result, sizeof(word), p);
+    pclose(p);
+    result[strlen(result)-1]='\0';
+    cout << "result: " << result << " " << strlen(result) << endl;
+    cout << "word : " << w << " " << strlen(w) << endl;
+    return strcmp(w, result) == 0;
 }
 
 int Lobby::getNumber()
@@ -224,7 +240,7 @@ bool Lobby::gameInProgress()
 string Lobby::getRanking()
 {
     string response = "NOTIFICATION_GAME_PLAYERS_" + to_string(this->lobbyPlayers.size()) + "_";
-    for(auto player : this->lobbyPlayers)
+    for (auto player : this->lobbyPlayers)
     {
         response += player->getNickname() + "_" + to_string(player->getPoints()) + "_";
     }
@@ -232,7 +248,30 @@ string Lobby::getRanking()
     return response;
 }
 
-void Lobby::notifyAboutWord(char* word, bool success)
+void Lobby::notifyAboutWord(char *word, bool success)
 {
-    
+    string notification = "NOTIFICATION_GAME_WORD_";
+    if (success)
+        notification += "SUCCESS_";
+    else
+        notification += "FAILURE_";
+
+    cout << "WORDDDDD: " << word << endl;
+    notification += word;
+    notification += "\n";
+
+    for (auto player : this->lobbyPlayers)
+    {
+        player->write((char *)notification.c_str(), notification.length());
+    }
+}
+
+void Lobby::notifyAboutRanking()
+{
+    string notification = this->getRanking();
+
+    for (auto player : this->lobbyPlayers)
+    {
+        player->write((char *)notification.c_str(), notification.length());
+    }
 }

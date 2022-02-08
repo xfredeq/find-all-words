@@ -502,8 +502,8 @@ public class GameView extends MyView implements ActionListener {
 
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
-            if (response.matches("NOTIFICATION_LETTER_[0-9]+")) {
-                System.out.println("letter received!!----------" + ((char) Integer.parseInt(split.get(2))));
+            if (response.matches("NOTIFICATION_GAME_LETTER_[0-9]+")) {
+                System.out.println("letter received!!----------" + ((char) Integer.parseInt(split.get(3))));
 
 
                 for (int i = 0; i < lettersList.size(); i++) {
@@ -512,7 +512,7 @@ public class GameView extends MyView implements ActionListener {
                         lettersTable.removeAll();
                         addLetters();
                         lettersPanel.revalidate();
-                        lettersList.set(i, ((char) Integer.parseInt(split.get(2))));
+                        lettersList.set(i, ((char) Integer.parseInt(split.get(3))));
                         break;
                     }
                 }
