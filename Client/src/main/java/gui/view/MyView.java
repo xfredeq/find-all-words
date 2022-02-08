@@ -1,4 +1,4 @@
-package put.poznan.tools;
+package gui.view;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +29,9 @@ public abstract class MyView extends JPanel {
         return this.nextViewButton;
     }
 
-    public JButton getSecondaryNextViewButton() {return this.secondaryNextViewButton;}
+    public JButton getSecondaryNextViewButton() {
+        return this.secondaryNextViewButton;
+    }
 
 
     public JButton getPreviousViewButton() {
@@ -46,7 +48,7 @@ public abstract class MyView extends JPanel {
 
 
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        if (this.previousViewName != null){
+        if (this.previousViewName != null) {
             cardLayout.show(cardPane, this.previousViewName);
         }
 

@@ -1,6 +1,4 @@
-package put.poznan.networking;
-
-import put.poznan.tools.Triplet;
+package tools;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -54,32 +52,6 @@ public class ConnectionHandler {
         responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
     }
 
-    @SuppressWarnings("unused")
-    public static String getMessage() {
-        try {
-            return in.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    public static String sendRequest(String request) {
-        System.out.println("request in send: " + request);
-        out.print(request);
-        out.flush();
-        try {
-            String response = in.readLine();
-            System.out.println("response: " + response);
-            while (!validateResponse(request, response)) {
-                response = in.readLine();
-            }
-            return response;
-        } catch (IOException t) {
-            return null;
-        }
-    }
-
 
     public static void endConnection() {
         try {
@@ -96,26 +68,6 @@ public class ConnectionHandler {
         }
     }
 
-    private static boolean validateResponse(String request, String response) {
-        switch (request) {
-            case "GET_LOBBYSIZE_@":
-                return response.matches("RESPONSE_LOBBYSIZE_[3-9]");
-            case "LOBBY_CREATE_@":
-                return response.matches("RESPONSE_LOBBY_CREATE_SUCCESS_[0-9]+");
-            case "GET_LOBBIES_@":
-                return response.matches("RESPONSE_LOBBIES_COUNT_[0-9]+_.*") || "RESPONSE_BAD_REQUEST".equals(response);
-            case "LOBBY_LEAVE_@":
-                return response.matches("RESPONSE_LOBBY_PLAYERS_[A-Z]+_[A-Z]+_.*");
-            default:
-                if (request.matches("SET_NICKNAME_.{4,}_@")) {
-                    return response.matches("RESPONSE_NICKNAME_.{7}_.*");
-                } else if (request.matches("LOBBY_JOIN_[1-9]+_@")) {
-                    return response.matches("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+");
-                }
-        }
-        return false;
-    }
-
     public static void readMessages() {
         messageGetter.execute();
     }
@@ -124,7 +76,7 @@ public class ConnectionHandler {
         messageGetter.cancel(true);
     }
 
-    public static String sendRequest2(String request, String type) {
+    public static String sendRequest(String request, String type) {
         out.print(request);
         out.flush();
         Object lock = ConnectionHandler.responseTable.get(type).lock;

@@ -1,15 +1,15 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import gui.todo.Lobby;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class LobbyView extends MyView implements ActionListener {
 
@@ -32,7 +32,7 @@ public class LobbyView extends MyView implements ActionListener {
 
     private Lobby selectedLobby;
 
-    LobbyView(CardLayout cardLayout, JPanel cardPane) {
+    public LobbyView(CardLayout cardLayout, JPanel cardPane) {
         this.cardLayout = cardLayout;
         this.cardPane = cardPane;
 
@@ -137,7 +137,7 @@ public class LobbyView extends MyView implements ActionListener {
         this.updater.cancel(true);
 
         int nr = this.selectedLobby.getNumber();
-        String response = ConnectionHandler.sendRequest2(
+        String response = ConnectionHandler.sendRequest(
                 "LOBBY_JOIN_" + nr + "_@", "lobbyJoin");
 
         String[] split = response.split("_");
@@ -168,7 +168,7 @@ public class LobbyView extends MyView implements ActionListener {
 
         if (source == this.create) {
             this.updater.cancel(true);
-            String response = ConnectionHandler.sendRequest2(
+            String response = ConnectionHandler.sendRequest(
                     "LOBBY_CREATE_@", "lobbyCreate");
             String[] split = response.split("_");
             System.out.println(Arrays.toString(split));
@@ -188,14 +188,14 @@ public class LobbyView extends MyView implements ActionListener {
         @Override
         protected Void doInBackground() {
 
-            publish(ConnectionHandler.sendRequest2("GET_LOBBIES_@", "lobbiesEntry"));
+            publish(ConnectionHandler.sendRequest("GET_LOBBIES_@", "lobbiesEntry"));
 
             while (!isCancelled()) {
                 Object lock = ConnectionHandler.responseTable.get("lobbies").lock;
                 synchronized (lock) {
                     try {
                         lock.wait();
-                       publish(ConnectionHandler.responseTable.get("lobbies").messages.poll());
+                        publish(ConnectionHandler.responseTable.get("lobbies").messages.poll());
                     } catch (InterruptedException e) {
                         //e.printStackTrace();
                         return null;

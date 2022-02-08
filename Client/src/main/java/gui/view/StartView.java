@@ -1,8 +1,7 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
-import put.poznan.tools.Tools;
+import tools.PropertiesHandler;
+import tools.Tools;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.List;
 
 public class StartView extends MyView implements ActionListener, FocusListener {
 
@@ -23,7 +21,6 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     private JButton connect;
     private JButton exit;
 
-    private CheckNick checkNick;
 
     public StartView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -46,7 +43,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
 
         this.nicknameTaken = new JLabel("This nick is already used!");
         this.nicknameTaken.setVisible(false);
-        this.nicknameTaken.setFont(new Font("Arial",Font.BOLD, 20));
+        this.nicknameTaken.setFont(new Font("Arial", Font.BOLD, 20));
         this.nicknameTaken.setForeground(Color.RED);
 
 
@@ -58,7 +55,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         this.nickname = new JTextField();
         this.nickname.setForeground(Color.BLACK);
         this.nickname.setFont(new Font("Arial", Font.ITALIC, 20));
-        this.nickname.setMaximumSize(new Dimension(200,40));
+        this.nickname.setMaximumSize(new Dimension(200, 40));
         this.nickname.addFocusListener(this);
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
@@ -109,7 +106,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         }
 
         //#TODO nick correctness
-        if(e.getActionCommand().equals("Connect")){
+        if (e.getActionCommand().equals("Connect")) {
             //this.checkNick = new CheckNick();
             //this.checkNick.execute();
         }
@@ -134,17 +131,4 @@ public class StartView extends MyView implements ActionListener, FocusListener {
 
     }
 
-    private class CheckNick extends SwingWorker<Void, String>{
-
-
-        @Override
-        protected Void doInBackground(){
-            return null;
-        }
-
-        @Override
-        protected void process(List<String> chunks){
-
-        }
-    }
 }

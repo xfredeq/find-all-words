@@ -1,8 +1,8 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import gui.todo.GameTimer;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,42 +14,34 @@ import java.util.List;
 public class GameView extends MyView implements ActionListener {
 
     private final GridBagConstraints c;
-
-    private JPanel enterPanel;
-    private JLabel enterTitle;
-    private JTextField enterTextField;
-    private JPanel submitPanel;
-
-
-    private JPanel wordsPanel;
-    private JLabel wordsTitle;
-    private JPanel playersPanel;
-    private JLabel playersTitle;
-
-    private JPanel timerPanel;
-    private JPanel lettersPanel;
-    private JPanel lettersTable;
-
-    private JButton submit;
-
-    private JLabel submitLabel;
-    private JLabel timerLabel;
-    private GameTimer gameTimer;
-    private JLabel letterLabel;
-
-    private JPanel letters;
-
-    private UpdateData updateData;
-    private UpdateTimer updateTimer;
-    private UpdatePlayersList updatePlayersList;
-
-    private ArrayList<Character> lettersList = new ArrayList<Character>(List.of(
+    private final ArrayList<Character> lettersList = new ArrayList<>(List.of(
             'w', 'a', 'o', 'r', 'd', ' ',
             'o', 'a', 'p', 'r', 'd', 'w',
             'r', 'a', ' ', ' ', ' ', ' ',
             'd', 'a', ' ', ' ', ' ', ' ',
             'w', ' ', ' ', ' ', ' ', ' ',
             'a', ' ', ' ', ' ', ' ', ' '));
+
+    private JPanel enterPanel;
+    private JLabel enterTitle;
+    private JTextField enterTextField;
+    private JPanel submitPanel;
+    private JPanel wordsPanel;
+    private JLabel wordsTitle;
+    private JPanel playersPanel;
+    private JLabel playersTitle;
+    private JPanel timerPanel;
+    private JPanel lettersPanel;
+    private JPanel lettersTable;
+    private JButton submit;
+    private JLabel submitLabel;
+    private JLabel timerLabel;
+    private GameTimer gameTimer;
+    private JLabel letterLabel;
+    private JPanel letters;
+    private UpdateData updateData;
+    private UpdateTimer updateTimer;
+    private UpdatePlayersList updatePlayersList;
 
 
     public GameView() {
@@ -181,12 +173,6 @@ public class GameView extends MyView implements ActionListener {
         this.timerLabel.setPreferredSize(new Dimension(80, 40));
         this.timerLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
         this.timerPanel.setBackground(new Color(221, 207, 255));
-
-        /*this.timeElapsed = new JLabel(LocalTime.now().toString(), SwingConstants.CENTER);
-        this.timeElapsed.setMaximumSize(new Dimension(180, 40));
-        this.timeElapsed.setPreferredSize(new Dimension(80, 40));
-        this.timeElapsed.setFont(new Font("Monospaced", Font.BOLD, 20));
-        this.timeElapsed.setBackground(new Color(221, 207, 255));*/
 
         this.lettersPanel = new JPanel(new BorderLayout(8, 8));
         this.lettersPanel.setBackground(new Color(207, 206, 220));
@@ -341,7 +327,7 @@ public class GameView extends MyView implements ActionListener {
                 }
             }
             if (!wrongLetters) {
-                response = ConnectionHandler.sendRequest2("CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
+                response = ConnectionHandler.sendRequest("CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
                 if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
 
                     for (int i = 0; i < enterTextField.getText().length(); i++) {
@@ -397,7 +383,7 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "playersList"));
+            publish(ConnectionHandler.sendRequest("GAME_PLAYERS_@", "playersList"));
             while (!isCancelled()) {
                 Object lock = ConnectionHandler.responseTable.get("playersList").lock;
                 synchronized (lock) {
@@ -426,7 +412,6 @@ public class GameView extends MyView implements ActionListener {
             for (int i = 0; i < count; i++) {
                 String nick = split.get(4 + i * 2);
                 String score = split.get(5 + i * 2);
-                Color c = null;
                 JLabel l = new JLabel(nick + "   " + score, SwingConstants.CENTER);
                 l.setAlignmentX(Component.CENTER_ALIGNMENT);
                 l.setOpaque(true);
@@ -444,34 +429,16 @@ public class GameView extends MyView implements ActionListener {
             publish(PropertiesHandler.getProperty("game_duration"));
             return null;
         }
-        /*@Override
-        protected Void doInBackground() {
-            while (!isCancelled()) {
-                String lock = PropertiesHandler.getProperty("game_duration");
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(PropertiesHandler.getProperty("game_duration"));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-            return null;
-        }*/
 
         @Override
         protected void process(List<String> chunks) {
-            String response = chunks.get(chunks.size() - 1);
+            String time = chunks.get(chunks.size() - 1);
 
-            if (!"0".equals(response)) {
-                gameTimer.setTime(Integer.parseInt(response) * 1000);
+            if (!"0".equals(time)) {
+                gameTimer.setTime(Integer.parseInt(time) * 1000);
                 gameTimer.start();
             }
-
         }
-
     }
 
 

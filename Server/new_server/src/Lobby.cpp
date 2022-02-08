@@ -32,11 +32,10 @@ void Lobby::removePlayer(Player *player)
     if (this->lobbyPlayers.size() == 0)
     {
         lobbies.erase(this);
-        // delete this;
+        delete this;
         player->notifyAllWaiting();
         return;
     }
-
     player->notifyAllInLobby();
     player->notifyAllWaiting();
 }
@@ -107,7 +106,7 @@ void Lobby::game()
         }
 
         thread(&Lobby::round, this).join();
-        if (this->lobbyPlayers.size() == 0)
+        if (this->lobbyPlayers.size() == 1)
         {
             return;
         }
@@ -120,7 +119,7 @@ void Lobby::game()
         sleep(5);
     }
 
-    this->calculateResults();
+    this->finalizeGame();
 }
 
 void Lobby::round()
@@ -135,7 +134,6 @@ void Lobby::round()
             notification = "NOTIFICATION_GAME_VICTORY_PLACE_1_POINTS_" + to_string(winner->getPoints()) + "\n";
 
             winner->write((char *)notification.c_str(), notification.size());
-            this->removePlayer(winner);
             return;
         }
         char c = getRandomChar();
@@ -149,8 +147,14 @@ void Lobby::round()
     }
 }
 
-void Lobby::calculateResults()
+void Lobby::finalizeGame()
 {
+    string notification = "NOTIFICATION_GAME_FINISHED\n";
+    for (auto player : this->lobbyPlayers)
+    {
+        player->write((char *)notification.c_str(), notification.size());
+    }
+    this->notifyAboutRanking();
 }
 
 string Lobby::checkWord(char *word, Player *player)
@@ -211,7 +215,7 @@ bool Lobby::existsWord(char *w)
     p = popen(res.c_str(), "r");
     fgets(result, sizeof(word), p);
     pclose(p);
-    result[strlen(result)-1]='\0';
+    result[strlen(result) - 1] = '\0';
     cout << "result: " << result << " " << strlen(result) << endl;
     cout << "word : " << w << " " << strlen(w) << endl;
     return strcmp(w, result) == 0;

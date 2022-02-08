@@ -45,10 +45,13 @@ public:
 int main(int argc, char **argv)
 {
     cout << "MAIN: " << this_thread::get_id() << endl;
+
     if (argc < 3)
-        error(1, 0, "Need 2 arg (port, lobby size)");
-    auto port = readArgument(argv[1], true);
-    lobbySize = readArgument(argv[2], false);
+        error(1, 0, "Need 4 arg (address, port, lobby size, roundsNumber)");
+
+    auto port = readArgument(argv[2], false);
+    lobbySize = readArgument(argv[3], true);
+    roundsNumber = readArgument(argv[4], true);
 
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1)
@@ -59,17 +62,16 @@ int main(int argc, char **argv)
 
     setReuseAddr(serverSocket);
 
-    sockaddr_in serverAddr{.sin_family = AF_INET, .sin_port = htons((short)port), .sin_addr = {INADDR_ANY}};
+    sockaddr_in serverAddr{.sin_family = AF_INET, .sin_port = htons((short)port), .sin_addr = {inet_addr(argv[1])}};
     int res = bind(serverSocket, (sockaddr *)&serverAddr, sizeof(serverAddr));
     if (res)
         error(1, errno, "bind failed");
 
-    // enter listening mode
     res = listen(serverSocket, 1);
     if (res)
         error(1, errno, "listen failed");
 
-    cout << port << " " << lobbySize << " " << serverSocket << endl;
+    cout << argv[1] << " " << port << " " << lobbySize << " " << serverSocket << endl;
 
     lobbyNumber = 1;
 
@@ -85,11 +87,7 @@ int main(int argc, char **argv)
             error(0, errno, "epoll_wait failed");
             stop_server(SIGINT);
         }
-        if (ee.data.ptr == &serverHandler)
-        {
-            ((Handler *)ee.data.ptr)->handleEvent(ee.events);
-        }
-        cout << "event" << endl;
+        ((Handler *)ee.data.ptr)->handleEvent(ee.events);
     }
 }
 
@@ -114,7 +112,7 @@ int readArgument(char *txt, bool type)
 {
     char *ptr;
     auto arg = strtol(txt, &ptr, 10);
-    if (type)
+    if (!type)
     {
         if (*ptr != 0 || arg < 1 || (arg > ((1 << 16) - 1)))
             error(1, 0, "illegal argument %s", txt);
@@ -122,10 +120,10 @@ int readArgument(char *txt, bool type)
     }
     else
     {
+        if (*ptr != 0 || arg < 2 || (arg > 9))
+            error(1, 0, "illegal argument %s", txt);
+        return arg;
     }
-    if (*ptr != 0 || arg < 2 || (arg > 8))
-        error(1, 0, "illegal argument %s", txt);
-    return arg;
 }
 
 void sendToAllBut(int fd, char *buffer, int count)
@@ -210,11 +208,4 @@ char getRandomChar()
     c = char(letter(gen));
 
     return c;
-}
-
-
-bool contains(list<char> listOfElements, char element)
-{
-    auto it = find(listOfElements.begin(), listOfElements.end(), element);
-    return it != listOfElements.end();
 }

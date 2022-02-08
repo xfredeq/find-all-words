@@ -1,6 +1,7 @@
-package put.poznan.GUI;
+package gui.todo;
 
-import put.poznan.tools.PropertiesHandler;
+
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -142,7 +143,6 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
                 PropertiesHandler.saveProperties();
                 dispose();
             }
-            //#TODO warning?
             if (!validateAddress()) {
                 this.address.setBackground(Color.red);
             }

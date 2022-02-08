@@ -19,7 +19,7 @@ class Player : public Handler
     bool votedStart;
 
     int points;
-    
+
     struct Buffer
     {
         Buffer() { data = (char *)malloc(len); }
@@ -53,6 +53,7 @@ class Player : public Handler
 
 public:
     Player(int fd);
+
     virtual ~Player();
 
     int fd() const { return _fd; }
@@ -84,9 +85,6 @@ public:
 
     int getPoints();
     void setPoints(int points);
-
-
-
 };
 
 #endif

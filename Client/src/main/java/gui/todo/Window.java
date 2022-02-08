@@ -1,6 +1,7 @@
-package put.poznan.GUI;
+package gui.todo;
 
-import put.poznan.tools.MyView;
+
+import gui.view.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,16 +60,8 @@ public class Window extends JFrame implements ActionListener {
         this.setVisible(true);
     }
 
-    public int getWindowWidth() {
-        return windowWidth;
-    }
-
     public void setWindowWidth(int windowWidth) {
         this.windowWidth = windowWidth;
-    }
-
-    public int getWindowHeight() {
-        return windowHeight;
     }
 
     public void setWindowHeight(int windowHeight) {

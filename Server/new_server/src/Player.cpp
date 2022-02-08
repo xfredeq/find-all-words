@@ -57,7 +57,6 @@ void Player::remove()
         this->lobby->removePlayer(this);
     }
     freePlayers.erase(this);
-
     delete this;
 }
 
@@ -113,11 +112,8 @@ void Player::waitForEvents()
             return;
         }
 
-        if (ee.data.ptr == this)
-        {
-            cout << "WAITER: " << this_thread::get_id() << endl;
-            ((Handler *)ee.data.ptr)->handleEvent(ee.events);
-        }
+        cout << "WAITER: " << this_thread::get_id() << endl;
+        ((Handler *)ee.data.ptr)->handleEvent(ee.events);
         cout << " player event" << endl;
     }
 }
@@ -194,7 +190,6 @@ void Player::handleEvent(uint32_t events)
 
 void Player::processRequests(int fd, char *buffer, int length)
 {
-    // "TYP_zadanie_dane_@"
     cout << "PROCESS: " << this_thread::get_id() << endl;
 
     string request(buffer, buffer + length);
@@ -270,6 +265,16 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                     this->write((char *)response.c_str(), response.length());
                 }
+                else if (strcmp("ROUNDS", subType) == 0)
+                {
+                    string response = "RESPONSE_ROUNDS_" + to_string(roundsNumber) + "\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
+                else
+                {
+                    string response = "BAD_REQUEST\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
             }
             else if (strcmp("LOBBY", type) == 0)
             {
@@ -334,7 +339,6 @@ void Player::processRequests(int fd, char *buffer, int length)
         }
         else // PLAYER IN LOBBY
         {
-
             if (strcmp("LOBBY", type) == 0)
             {
                 if (strcmp("LEAVE", subType) == 0)
@@ -428,6 +432,7 @@ void Player::processRequests(int fd, char *buffer, int length)
 
     delete type;
     delete subType;
+    return;
 }
 
 void Player::notifyAllWaiting()

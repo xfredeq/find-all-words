@@ -1,8 +1,8 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import gui.todo.GameTimer;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +33,7 @@ public class VoteView extends MyView implements ActionListener {
     private UpdatePlayersList updatePlayersList;
     private UpdateTimer updateTimer;
 
-    VoteView() {
+    public VoteView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setComponents();
         this.addComponents();
@@ -94,7 +94,6 @@ public class VoteView extends MyView implements ActionListener {
         this.buttonPanel.add(this.cancel);
 
 
-
     }
 
     private void addComponents() {
@@ -133,7 +132,7 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        String response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
+        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
         System.out.println(Arrays.toString(response.split("_")));
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
@@ -147,7 +146,7 @@ public class VoteView extends MyView implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getActionCommand().equals("Vote")) {
-            String response = ConnectionHandler.sendRequest2("LOBBY_VOTE_@", "selfVote");
+            ConnectionHandler.sendRequest("LOBBY_VOTE_@", "selfVote");
 
             System.out.println("voted");
         }
@@ -215,7 +214,7 @@ public class VoteView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("LOBBY_PLAYERS_@", "playersVotes"));
+            publish(ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes"));
             ConnectionHandler.responseTable.get("playersVotes").messages.clear();
             while (!isCancelled()) {
                 Object lock = ConnectionHandler.responseTable.get("playersVotes").lock;
@@ -246,7 +245,6 @@ public class VoteView extends MyView implements ActionListener {
             for (int i = 0; i < count; i++) {
                 String nick = split.get(4 + i * 2);
                 String vote = split.get(5 + i * 2);
-                Color c = null;
                 JLabel l = new JLabel(nick, SwingConstants.CENTER);
                 if ("1".equals(vote)) {
                     l.setBackground(Color.GREEN);

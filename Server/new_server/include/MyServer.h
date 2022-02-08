@@ -45,8 +45,11 @@ extern unordered_set<Lobby *> lobbies;
 #include "Player.h"
 
 void stop_server(int);
+
 int readArgument(char *txt, bool type);
+
 void setReuseAddr(int sock);
+
 void acceptUsers();
 
 void sendToAllBut(int fd, char *buffer, int count);
@@ -58,7 +61,5 @@ string constructLobbyMessage(Lobby *lobby);
 bool checkNicknameUniquness(char *nickname, Player *p);
 
 char getRandomChar();
-
-bool contains(list<char> listOfElements, char element);
 
 #endif

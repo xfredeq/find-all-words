@@ -1,6 +1,7 @@
-package put.poznan.GUI;
+package gui.todo;
 
-import put.poznan.tools.PropertiesHandler;
+
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,12 +15,10 @@ public class Lobby extends JPanel {
     private JLabel capacity;
 
 
-
     private JButton select;
 
 
-    Lobby(String number, String players) {
-        //#TODO get lobby nr from server
+    public Lobby(String number, String players) {
         this.nr = Integer.parseInt(number);
         this.setLayout(new GridLayout(1, 5));
         this.setPreferredSize(new Dimension(400, 60));
@@ -37,7 +36,6 @@ public class Lobby extends JPanel {
     private void setComponents(String players) {
 
         this.name = new JLabel("Lobby " + this.nr);
-        //#TODO get number of players in lobby
         this.players = new JLabel(players);
         this.capacity = new JLabel(PropertiesHandler.getProperty("lobbySize"));
 
@@ -58,10 +56,8 @@ public class Lobby extends JPanel {
         return select;
     }
 
-    public void updatePlayersNumber(String number) {
-        this.players.setText(number);
+    public int getNumber() {
+        return this.nr;
     }
-
-    public int getNumber() {return this.nr;}
 
 }

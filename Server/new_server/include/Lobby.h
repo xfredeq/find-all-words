@@ -50,7 +50,7 @@ public:
 
     void round();
 
-    void calculateResults();
+    void finalizeGame();
 
     string checkWord(char *word, Player *player);
 

@@ -1,8 +1,7 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +9,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.Semaphore;
 
-import static put.poznan.networking.ConnectionHandler.address;
+import static tools.ConnectionHandler.address;
+
 
 public class LoadingView extends MyView implements PropertyChangeListener {
 
@@ -27,7 +27,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     private Semaphore semaphore = new Semaphore(0);
     private Semaphore semaphore2 = new Semaphore(0);
 
-    LoadingView(CardLayout layout, JPanel pane) {
+    public LoadingView(CardLayout layout, JPanel pane) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.cardLayout = layout;
         this.cardPane = pane;
@@ -88,7 +88,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         semaphore2 = new Semaphore(0);
 
         System.out.println("inside");
-        //#TODO get lobby size from server
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         this.connectionTask = new ConnectionTask();
@@ -105,7 +104,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        //#TODO break connection
         ConnectionHandler.endConnection();
         this.progressThread.interrupt();
         this.connectionTask.cancel(true);
@@ -137,7 +135,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             for (int i = 0; i < 5; i++) {
                 if (i == 0) {
-                    ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
+                    address = PropertiesHandler.getProperty("serverAddress");
                     ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
                 } else if (i == 1) {
                     ConnectionHandler.initializeTable();
@@ -148,7 +146,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     }
                     ConnectionHandler.readMessages();
                 } else if (i == 3) {
-                    String response = ConnectionHandler.sendRequest2(
+                    String response = ConnectionHandler.sendRequest(
                             "GET_LOBBYSIZE_@", "lobbySize");
 
                     String[] split = response.split("_");
@@ -156,7 +154,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
-                    String response = ConnectionHandler.sendRequest2("SET_NICKNAME_" + nickname + "_@", "nickname");
+                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@", "nickname");
 
 
                     String[] split = response.split("_");
