@@ -52,8 +52,6 @@ void setReuseAddr(int sock);
 
 void acceptUsers();
 
-void sendToAllBut(int fd, char *buffer, int count);
-
 string constructLobbiesMessage();
 
 string constructLobbyMessage(Lobby *lobby);

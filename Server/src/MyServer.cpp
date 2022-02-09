@@ -4,7 +4,7 @@ int lobbySize;
 int lobbyNumber;
 
 int roundsNumber = 3;
-int roundDuration = 30;
+int roundDuration = 180;
 int wordInterval = 3;
 
 int serverSocket;
@@ -18,7 +18,6 @@ class : Handler
 public:
     virtual void handleEvent(uint32_t events) override
     {
-        cout << "handler" << endl;
         if (events & EPOLLIN)
         {
             sockaddr_in clientAddr{};
@@ -44,7 +43,6 @@ public:
 
 int main(int argc, char **argv)
 {
-    cout << "MAIN: " << this_thread::get_id() << endl;
 
     if (argc < 5)
         error(1, 0, "Need 4 arg (address, port, lobby size, roundsNumber)");
@@ -71,12 +69,10 @@ int main(int argc, char **argv)
     if (res)
         error(1, errno, "listen failed");
 
-    cout << argv[1] << " " << port << " " << lobbySize << " " << serverSocket << endl;
 
     lobbyNumber = 1;
 
     mainEpollFd = epoll_create1(0);
-    cout << "main epoll: " << mainEpollFd << endl;
     epoll_event ee{EPOLLIN, {.ptr = &serverHandler}};
     epoll_ctl(mainEpollFd, EPOLL_CTL_ADD, serverSocket, &ee);
 
@@ -96,7 +92,6 @@ void stop_server(int)
     for (auto player : freePlayers)
         close(player->fd());
     close(serverSocket);
-    printf("Closing server\n");
     exit(0);
 }
 
@@ -123,18 +118,6 @@ int readArgument(char *txt, bool type)
         if (*ptr != 0 || arg < 2 || (arg > 9))
             error(1, 0, "illegal argument %s", txt);
         return arg;
-    }
-}
-
-void sendToAllBut(int fd, char *buffer, int count)
-{
-    auto it = freePlayers.begin();
-    while (it != freePlayers.end())
-    {
-        Player *player = *it;
-        it++;
-        if (player->fd() != fd)
-            player->write(buffer, count);
     }
 }
 
@@ -178,10 +161,8 @@ bool checkNicknameUniquness(char *nickname, Player *p)
 {
     for (auto player : freePlayers)
     {
-        cout << player->getNickname() << endl;
         if (strcmp(nickname, (char *)player->getNickname().c_str()) == 0 && player != p)
         {
-            cout << "f1" << endl;
             return false;
         }
     }
@@ -191,7 +172,6 @@ bool checkNicknameUniquness(char *nickname, Player *p)
         {
             if (strcmp(nickname, (char *)player->getNickname().c_str()) == 0)
             {
-                cout << "f2" << endl;
                 return false;
             }
         }

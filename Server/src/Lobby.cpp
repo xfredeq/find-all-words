@@ -65,7 +65,6 @@ bool Lobby::checkGameStart()
 
 void Lobby::startGame()
 {
-    cout << "CD THREAD: " << this_thread::get_id() << endl;
     string message = "NOTIFICATION_START_COUNTDOWN_10\n";
     for (auto player : this->lobbyPlayers)
     {
@@ -141,7 +140,6 @@ void Lobby::round()
             return;
         }
         char c = getRandomChar();
-        cout << i << " " << c << endl;
         notification = "NOTIFICATION_GAME_LETTER_" + to_string((char)c) + "\n";
         for (auto player : this->lobbyPlayers)
         {
@@ -220,8 +218,6 @@ bool Lobby::existsWord(char *w)
     fgets(result, sizeof(word), p);
     pclose(p);
     result[strlen(result) - 1] = '\0';
-    cout << "result: " << result << " " << strlen(result) << endl;
-    cout << "word : " << w << " " << strlen(w) << endl;
     return strcmp(w, result) == 0;
 }
 
@@ -264,7 +260,6 @@ void Lobby::notifyAboutWord(char *word, bool success)
     else
         notification += "FAILURE_";
 
-    cout << "WORDDDDD: " << word << endl;
     notification += word;
     notification += "\n";
 

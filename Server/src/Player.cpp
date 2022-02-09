@@ -51,7 +51,6 @@ void Player::write(char *buffer, int count)
 
 void Player::remove()
 {
-    printf("removing %d\n", _fd);
     if (this->inLobby)
     {
         this->lobby->removePlayer(this);
@@ -112,9 +111,7 @@ void Player::waitForEvents()
             return;
         }
 
-        cout << "WAITER: " << this_thread::get_id() << endl;
         ((Handler *)ee.data.ptr)->handleEvent(ee.events);
-        cout << " player event" << endl;
     }
 }
 
@@ -145,8 +142,6 @@ void Player::handleEvent(uint32_t events)
                 {
                     int thismsglen = eol - readBuffer.data + 1;
                     string s(readBuffer.data, readBuffer.data + thismsglen);
-
-                    cout << "s: " << s << endl;
 
                     processRequests(_fd, readBuffer.data, thismsglen);
 
@@ -190,7 +185,6 @@ void Player::handleEvent(uint32_t events)
 
 void Player::processRequests(int fd, char *buffer, int length)
 {
-    cout << "PROCESS: " << this_thread::get_id() << endl;
 
     string request(buffer, buffer + length);
     char *type = new char[10];
@@ -199,8 +193,8 @@ void Player::processRequests(int fd, char *buffer, int length)
     int index = request.find("_");
     if (index < 1)
     {
-        delete type;
-        delete subType;
+        delete[] type;
+        delete[] subType;
         return;
     }
 
@@ -210,22 +204,20 @@ void Player::processRequests(int fd, char *buffer, int length)
     index = request.find("_");
     if (index < 1)
     {
-        delete type;
-        delete subType;
+        delete[] type;
+        delete[] subType;
         return;
     }
 
     strcpy(subType, request.substr(0, index).c_str());
     request = request.substr(index + 1);
 
-    cout << this->inGame << " " << this->inLobby << endl;
     if (!this->inGame) // PLAYER OUT OF GAME
     {
         if (!this->inLobby) // PLAYER OUT OF LOBBY
         {
             if (strcmp("SET", type) == 0)
             {
-                cout << type << endl;
                 if (strcmp("NICKNAME", subType) == 0)
                 {
                     char *nickname = new char[20];
@@ -233,9 +225,9 @@ void Player::processRequests(int fd, char *buffer, int length)
                     index = request.find("_");
                     if (index < 1)
                     {
-                        delete nickname;
-                        delete type;
-                        delete subType;
+                        delete[] nickname;
+                        delete[] type;
+                        delete[] subType;
                         return;
                     }
 
@@ -297,9 +289,9 @@ void Player::processRequests(int fd, char *buffer, int length)
                     index = request.find("_");
                     if (index < 1)
                     {
-                        delete nr;
-                        delete type;
-                        delete subType;
+                        delete[] nr;
+                        delete[] type;
+                        delete[] subType;
                         return;
                     }
 
@@ -365,7 +357,6 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                     if (this->lobby->checkGameStart())
                     {
-                        cout << "GAME STARTS" << endl;
                         this->notifyAllWaiting();
                         this->lobby->startCountdownThread();
                     }
@@ -374,9 +365,7 @@ void Player::processRequests(int fd, char *buffer, int length)
                 {
                     string response = "NOTIFICATION_" + constructLobbyMessage(this->lobby);
                     this->write((char *)response.c_str(), response.length());
-                    cout << "LOBBY PLAYERS!!!" << endl;
                 }
-
                 else
                 {
                     string response = "RESPONSE_BAD_REQUEST\n";
@@ -401,9 +390,9 @@ void Player::processRequests(int fd, char *buffer, int length)
                 index = request.find("_");
                 if (index < 1)
                 {
-                    delete word;
-                    delete type;
-                    delete subType;
+                    delete[] word;
+                    delete[] type;
+                    delete[] subType;
                     return;
                 }
 
@@ -443,8 +432,8 @@ void Player::processRequests(int fd, char *buffer, int length)
         }
     }
 
-    delete type;
-    delete subType;
+    delete[] type;
+    delete[] subType;
     return;
 }
 

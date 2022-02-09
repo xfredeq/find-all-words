@@ -337,6 +337,12 @@ public class GameView extends MyView implements ActionListener {
         }
         this.addLetters();
 
+        wordsPanel.removeAll();
+        wordsPanel.repaint();
+        wordsPanel.revalidate();
+        validate();
+        updateWords();
+
         this.enterTextField.setText("");
         this.enterTextField.requestFocus();
 

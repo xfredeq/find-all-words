@@ -259,9 +259,6 @@ public class VoteView extends MyView implements ActionListener {
 
                     timer.setVisible(true);
                 } else if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
-                    timer.stop();
-                    timer.setTime(Integer.parseInt(PropertiesHandler.getProperty("game_duration")));
-                    timer.setCurrentTime(new JLabel(""));
                     PropertiesHandler.setProperty("game_duration", split.get(3));
                     PropertiesHandler.saveProperties();
                     nextViewFakeButton.doClick();
@@ -321,11 +318,9 @@ public class VoteView extends MyView implements ActionListener {
                     } else {
                         l.setBackground(Color.RED);
                     }
-
                     l.setAlignmentX(Component.CENTER_ALIGNMENT);
                     l.setOpaque(true);
                     playersPanel.add(l);
-
                 }
                 playersPanel.revalidate();
                 validate();
