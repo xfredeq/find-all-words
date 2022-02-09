@@ -176,7 +176,7 @@ public class Window extends JFrame implements ActionListener {
                 nextView.onShowAction();
             } else if (source == view.getPreviousViewButton()) {
                 MyView previousView = null;
-                if (view.getViewName().equals("ConnectingView") || view.getViewName().equals("LobbyView")) {
+                if (view.getViewName().equals("LoadingView") || view.getViewName().equals("LobbyView")) {
                     this.menuSettings.setVisible(true);
                 }
                 for (var v : this.views) {

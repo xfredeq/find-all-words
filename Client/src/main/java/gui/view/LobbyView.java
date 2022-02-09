@@ -201,7 +201,7 @@ public class LobbyView extends MyView implements ActionListener {
             while (!isCancelled()) {
                 try {
                     publish(ConnectionHandler.responseTable.get("lobbies")
-                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
+                            .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.SECONDS));
                 } catch (InterruptedException e) {
                     //e.printStackTrace();
                     System.out.println("interrupt lobby");

@@ -1,4 +1,4 @@
-package gui.view;
+package gui.helpers;
 
 import java.util.*;
 

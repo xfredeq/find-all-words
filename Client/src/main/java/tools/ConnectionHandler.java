@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 
 
 public class ConnectionHandler {
-    public static int timeoutTime = 10;
-    public static int requestTimeout = 3;
-    public static int port = 1313;
-    public static String address = "localhost";
+    public static int generalTimeout;
+    public static int requestTimeout;
+    public static int port;
+    public static String address;
     public static Socket socket;
     public static HashMap<String, MessageQueue> responseTable;
     private static PrintWriter out;

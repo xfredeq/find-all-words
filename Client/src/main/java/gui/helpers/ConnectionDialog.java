@@ -125,9 +125,9 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
 
     private void setDefault() {
         this.address.setText(PropertiesHandler.getProperty("defaultAddress"));
-        this.port.setText("defaultPort");
-        this.generalTimeout.setText("generalTimeout");
-        this.requestTimeout.setText("requestTimeout");
+        this.port.setText(PropertiesHandler.getProperty("defaultPort"));
+        this.generalTimeout.setText(PropertiesHandler.getProperty("defaultGeneralTimeout"));
+        this.requestTimeout.setText(PropertiesHandler.getProperty("defaultRequestTimeout"));
         this.address.setBackground(Color.WHITE);
         this.port.setBackground(Color.WHITE);
     }

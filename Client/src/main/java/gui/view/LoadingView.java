@@ -137,6 +137,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 if (i == 0) {
                     ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
                     ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
+                    ConnectionHandler.requestTimeout = Integer.parseInt(PropertiesHandler.getProperty("requestTimeout"));
+                    ConnectionHandler.generalTimeout = Integer.parseInt(PropertiesHandler.getProperty("generalTimeout"));
+
                 } else if (i == 1) {
                     ConnectionHandler.initializeTable();
                 } else if (i == 2) {

@@ -1,5 +1,6 @@
 package gui.view;
 
+import gui.helpers.ComparePoints;
 import gui.helpers.GameTimer;
 import tools.ConnectionHandler;
 import tools.PropertiesHandler;
@@ -449,7 +450,7 @@ public class GameView extends MyView implements ActionListener {
             while (!isCancelled()) {
                 try {
                     response = ConnectionHandler.responseTable.get("gameNotification")
-                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS);
+                            .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.SECONDS);
                     publish(response != null ? response : "NOTIFICATION_GAME_TIMEOUT");
                 } catch (InterruptedException e) {
                     //e.printStackTrace();

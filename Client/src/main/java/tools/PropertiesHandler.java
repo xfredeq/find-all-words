@@ -24,6 +24,8 @@ public class PropertiesHandler {
         }
         PropertiesHandler.setProperty("serverAddress", PropertiesHandler.getProperty("defaultAddress"));
         PropertiesHandler.setProperty("serverPort", PropertiesHandler.getProperty("defaultPort"));
+        PropertiesHandler.setProperty("requestTimeout", PropertiesHandler.getProperty("defaultRequestTimeout"));
+        PropertiesHandler.setProperty("generalTimeout", PropertiesHandler.getProperty("defaultGeneralTimeout"));
     }
 
     public static String getProperty(String key) {

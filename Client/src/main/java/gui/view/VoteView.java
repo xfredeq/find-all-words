@@ -137,6 +137,7 @@ public class VoteView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
+        updateLeave = new UpdateLeave();
         System.out.println("List of nicks updater started");
     }
 
@@ -229,7 +230,7 @@ public class VoteView extends MyView implements ActionListener {
         protected Void doInBackground() {
             try {
                 publish(ConnectionHandler.responseTable.get("timerStart")
-                        .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.DAYS));
+                        .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.DAYS));
             } catch (InterruptedException e) {
                 //e.printStackTrace();
                 return null;
@@ -254,7 +255,7 @@ public class VoteView extends MyView implements ActionListener {
                 split = new ArrayList<>(List.of(response.split("_")));
                 System.out.println(split);
                 if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
-                    updateLeave = new UpdateLeave();
+
                     updateLeave.execute();
 
                     //timer = new GameTimer();
@@ -298,7 +299,7 @@ public class VoteView extends MyView implements ActionListener {
             while (!isCancelled()) {
                 try {
                     publish(ConnectionHandler.responseTable.get("playersVotes")
-                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
+                            .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.SECONDS));
                 } catch (InterruptedException e) {
                     //e.printStackTrace();
                     return null;
