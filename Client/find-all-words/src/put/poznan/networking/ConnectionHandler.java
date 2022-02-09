@@ -53,6 +53,7 @@ public class ConnectionHandler {
         //responseTable.put("wordsList", new Triplet("NOTIFICATION_WORD_.{7}_.+"));
         //responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
         responseTable.put("gameNotification", new Triplet("NOTIFICATION_GAME_.*"));
+        responseTable.put("roundsNumber", new Triplet("RESPONSE_ROUNDS_[0-9]"));
     }
 
     @SuppressWarnings("unused")

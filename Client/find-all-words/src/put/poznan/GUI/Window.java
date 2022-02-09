@@ -110,10 +110,10 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
-        this.views.add(new LoadingView(cardLayout, cardPane));
+        this.views.add(new LoadingView(this.cardLayout, this.cardPane));
         this.views.add(new LobbyView(this.cardLayout, this.cardPane));
         this.views.add(new VoteView());
-        this.views.add(new GameView());
+        this.views.add(new GameView(this.cardLayout, this.cardPane));
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);
@@ -140,7 +140,13 @@ public class Window extends JFrame implements ActionListener {
             }
 
         } else if (source == this.about) { // #TODO text from properties
-            JOptionPane.showMessageDialog(this, "TODO", "About", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, """
+                    This is an online game called "Find all words".\s
+                    The goal is to assemble as many words as possible from letters sent by server.\s
+                    Points are awarded for words that are in the system dictionary.\s
+                    Penalty is applied when the word is not present in the dictionary.\s
+                    Letters are taken away when assembled word is proper.\s
+                    """, "About", JOptionPane.INFORMATION_MESSAGE);
 
         } else if (source == this.connectionSettings) {
             if (this.connectionDialog == null) {

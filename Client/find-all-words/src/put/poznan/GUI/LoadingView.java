@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import static put.poznan.networking.ConnectionHandler.address;
@@ -154,6 +155,13 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
+                    PropertiesHandler.saveProperties();
+
+                    String responseRounds = ConnectionHandler.sendRequest2(
+                            "GET_ROUNDS_@", "roundsNumber"
+                    );
+                    String[] splitRounds = responseRounds.split("_");
+                    PropertiesHandler.setProperty("roundsNumber", splitRounds[splitRounds.length - 1]);
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");

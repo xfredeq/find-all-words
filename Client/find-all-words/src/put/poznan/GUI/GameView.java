@@ -14,6 +14,10 @@ import java.util.List;
 
 public class GameView extends MyView implements ActionListener {
 
+    private boolean gameFinished;
+    private final CardLayout cardLayout;
+    private final JPanel cardPane;
+
     private final GridBagConstraints c;
 
     private JPanel enterPanel;
@@ -23,6 +27,7 @@ public class GameView extends MyView implements ActionListener {
 
 
     private JPanel wordsPanel;
+    private JPanel wordsList;
     private JLabel wordsTitle;
     private JPanel playersPanel;
     private JLabel playersTitle;
@@ -52,10 +57,11 @@ public class GameView extends MyView implements ActionListener {
             'a', ' ', ' ', ' ', ' ', ' '));
 
 
-    public GameView() {
+    public GameView(CardLayout layout, JPanel pane) {
         this.setLayout(new GridBagLayout());
         this.c = new GridBagConstraints();
-
+        this.cardLayout = layout;
+        this.cardPane = pane;
         this.setComponents();
         this.addComponents();
 
@@ -106,7 +112,14 @@ public class GameView extends MyView implements ActionListener {
         this.wordsTitle.setFont(new Font("Arial", Font.BOLD, 20));
         this.wordsTitle.setBackground(new Color(255, 199, 211));
 
+        this.wordsList = new JPanel(new GridLayout(24, 4));
+        this.wordsList.setBackground(new Color(255, 199, 211));
+        this.wordsList.setMaximumSize(new Dimension(180, 400));
+        this.wordsList.setPreferredSize(new Dimension(180, 400));
+
         this.wordsPanel.add(this.wordsTitle);
+
+        this.wordsPanel.add(this.wordsList);
     }
 
     private void setComponents() {
@@ -119,6 +132,7 @@ public class GameView extends MyView implements ActionListener {
         this.wordsPanel.setMaximumSize(new Dimension(180, 40));
         this.wordsPanel.setPreferredSize(new Dimension(80, 40));
         this.wordsPanel.setLayout(new BoxLayout(this.wordsPanel, BoxLayout.Y_AXIS));
+
 
         updateWords();
 
@@ -151,7 +165,6 @@ public class GameView extends MyView implements ActionListener {
         this.enterTextField.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.enterTextField.setMaximumSize(new Dimension(200, 40));
         this.enterTextField.setPreferredSize(new Dimension(200, 40));
-        //this.enterTextField.add();
 
 
         this.submitPanel = new JPanel();
@@ -188,11 +201,6 @@ public class GameView extends MyView implements ActionListener {
         this.timerLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
         this.timerPanel.setBackground(new Color(221, 207, 255));
 
-        /*this.timeElapsed = new JLabel(LocalTime.now().toString(), SwingConstants.CENTER);
-        this.timeElapsed.setMaximumSize(new Dimension(180, 40));
-        this.timeElapsed.setPreferredSize(new Dimension(80, 40));
-        this.timeElapsed.setFont(new Font("Monospaced", Font.BOLD, 20));
-        this.timeElapsed.setBackground(new Color(221, 207, 255));*/
 
         this.lettersPanel = new JPanel(new BorderLayout(8, 8));
         this.lettersPanel.setBackground(new Color(207, 206, 220));
@@ -214,6 +222,8 @@ public class GameView extends MyView implements ActionListener {
         this.letters.setBackground(new Color(207, 206, 220));
         this.letters.setMaximumSize(new Dimension(180, 180));
         this.letters.setPreferredSize(new Dimension(180, 40));
+
+        this.gameFinished = false;
 
 
     }
@@ -247,9 +257,6 @@ public class GameView extends MyView implements ActionListener {
         this.enterTextField.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.enterPanel.add(this.enterTextField);
         this.enterPanel.add(Box.createVerticalGlue());
-
-
-        this.wordsPanel.add(this.wordsTitle);
 
 
         this.playersPanel.add(this.playersTitle);
@@ -374,13 +381,20 @@ public class GameView extends MyView implements ActionListener {
     }
 
     @Override
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+        gameTimer.stop();
+        this.updateTimer.cancel(true);
+        this.updateData.cancel(true);
+        return super.moveToNextView(cardLayout, cardPane);
+    }
+
+    @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         gameTimer.stop();
         this.updateTimer.cancel(true);
         this.updateData.cancel(true);
         super.returnToPreviousView(cardLayout, cardPane);
     }
-
 
 
     private class UpdateTimer extends SwingWorker<Void, String> {
@@ -449,7 +463,8 @@ public class GameView extends MyView implements ActionListener {
 
 
                 } else if ("WORD".equals(split.get(2))) {
-                    JLabel word = new JLabel(split.get(4));
+                    JLabel word = new JLabel(split.get(4), SwingConstants.CENTER);
+                    word.setPreferredSize(new Dimension(100, 20));
                     //String result = split.get(3);
                     if ("SUCCESS".equals(split.get(3))) {
                         word.setBackground(Color.GREEN);
@@ -458,14 +473,14 @@ public class GameView extends MyView implements ActionListener {
                         word.setBackground(Color.RED);
                     }
                     word.setOpaque(true);
-                    wordsPanel.add(word);
+                    wordsList.add(word);
                 } else if ("PLAYERS".equals(split.get(2))) {
                     playersPanel.removeAll();
                     playersPanel.repaint();
                     updatePlayers();
                     int count = Integer.parseInt(split.get(3));
 
-                    Map<String,Integer> treeMap = new TreeMap<>();
+                    Map<String, Integer> treeMap = new TreeMap<>();
 
                     for (int i = 0; i < count; i++) {
                         String nick = split.get(4 + i * 2);
@@ -480,6 +495,10 @@ public class GameView extends MyView implements ActionListener {
                         l.setAlignmentX(Component.CENTER_ALIGNMENT);
                         l.setOpaque(true);
                         playersPanel.add(l);
+                    }
+                    if (gameFinished) {
+                        new Scoreboard(treeMap);
+                        returnToPreviousView(cardLayout, cardPane);
                     }
 
                     playersPanel.revalidate();
@@ -506,14 +525,40 @@ public class GameView extends MyView implements ActionListener {
                             lettersList.set(i, ' ');
                         }
                         updateTimer.cancel(true);
+                        if (Integer.parseInt(split.get(3)) < Integer.parseInt(PropertiesHandler.getProperty("roundsNumber"))) {
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    "Round " + number + " finished.\n" + "Starting round " + (Integer.parseInt(number) + 1) + " ...\n\n",
+                                    "End of round.\n\n",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                        }
+
+                    }
+
+                } else if ("VICTORY".equals(split.get(2))) {
+                    if ("LEFT".equals(split.get(4))) {
                         JOptionPane.showMessageDialog(
                                 null,
-                                "Round " + number + " finished.\n" + "Starting round " + (Integer.parseInt(number) + 1) + " ...\n\n",
-                                "End of round.\n\n",
+                                "Enemies left the game. You won!",
+                                "Game won.",
                                 JOptionPane.INFORMATION_MESSAGE
                         );
 
+
+                    } else if ("PLACE".equals(split.get(3))) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "You won the game!\n" +
+                                        "Your total score is " + split.get(6),
+                                "Game won.",
+                                JOptionPane.INFORMATION_MESSAGE
+                        );
+
+
                     }
+                } else if ("FINISHED".equals(split.get(2))) {
+                    gameFinished = true;
 
                 }
             }
