@@ -49,9 +49,8 @@ public class ConnectionHandler {
         responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
         responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME_[0-9]+"));
         responseTable.put("checkWord", new Triplet("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
-        responseTable.put("newLetter", new Triplet("NOTIFICATION_GAME_LETTER_[0-9]+"));
-        responseTable.put("wordsList", new Triplet("NOTIFICATION_GAME_WORD_.{7}_.+"));
-        responseTable.put("playersList", new Triplet("NOTIFICATION_GAME_PLAYERS_[0-9]_.{4,}_[0-9]+.*"));
+        responseTable.put("gameNotification", new Triplet("NOTIFICATION_GAME_.*"));
+        responseTable.put("roundsNumber", new Triplet("RESPONSE_ROUNDS_[0-9]"));
     }
 
 
@@ -96,10 +95,8 @@ public class ConnectionHandler {
         protected Void doInBackground() {
             System.out.println("reader started");
             while (!isCancelled()) {
-                System.out.println("while");
                 try {
                     String message = in.readLine();
-                    System.out.println(message);
                     for (Map.Entry<String, Triplet> entry : responseTable.entrySet()) {
                         Triplet triplet = entry.getValue();
                         if (message.matches(triplet.regex)) {

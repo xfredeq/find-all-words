@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import static tools.ConnectionHandler.address;
@@ -83,6 +84,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void onShowAction() {
+        this.enter.setVisible(false);
         System.out.println("on show start");
         semaphore = new Semaphore(0);
         semaphore2 = new Semaphore(0);
@@ -157,6 +159,13 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
+
+                    String responseRounds = ConnectionHandler.sendRequest2(
+                            "GET_ROUNDS_@", "roundsNumber"
+                    );
+                    String[] splitRounds = responseRounds.split("_");
+                    PropertiesHandler.setProperty("roundsNumber", splitRounds[splitRounds.length - 1]);
+                    PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
                     String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@", "nickname");
@@ -169,12 +178,27 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     String[] split = response.split("_");
 
                     if ("SUCCESS".equals(split[split.length - 2])) {
+                        enter.setVisible(true);
                         PropertiesHandler.setProperty("nickname", split[split.length - 1]);
                         PropertiesHandler.saveProperties();
                         System.out.println(response);
                     } else {
+                        enter.setVisible(false);
                         System.out.println("NOT UNIQUE NICK");
+                        /*JDialog dialog = new JDialog(null, "ACHTUNG!", Dialog.ModalityType.MODELESS);
+                        JOptionPane optionPane = new JOptionPane("Your nick is already used!", JOptionPane.ERROR_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+                        dialog.pack();
+                        dialog.setContentPane(optionPane);*/
+                        JOptionPane.showMessageDialog(
+                                JOptionPane.getFrameForComponent(null),
+                                "Your nick is already used!",
+                                "ACHTUNG!",
+                                JOptionPane.ERROR_MESSAGE);
+
+
                         returnToPreviousView(cardLayout, cardPane);
+
+
                         return null;
                     }
                 }

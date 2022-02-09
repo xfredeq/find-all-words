@@ -132,8 +132,14 @@ public class Window extends JFrame implements ActionListener {
                 dispose();
             }
 
-        } else if (source == this.about) { //
-            JOptionPane.showMessageDialog(this, "TODO", "About", JOptionPane.INFORMATION_MESSAGE);
+        } else if (source == this.about) {
+            JOptionPane.showMessageDialog(this, """
+                    This is an online game called "Find all words".\s
+                    The goal is to assemble as many words as possible from letters sent by server.\s
+                    Points are awarded for words that are in the system dictionary.\s
+                    Penalty is applied when the word is not present in the dictionary.\s
+                    Letters are taken away when assembled word is proper.\s
+                    """, "About", JOptionPane.INFORMATION_MESSAGE);
 
         } else if (source == this.connectionSettings) {
             if (this.connectionDialog == null) {

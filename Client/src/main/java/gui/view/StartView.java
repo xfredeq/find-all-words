@@ -32,7 +32,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     private void setComponents() {
         this.viewName = "StartView";
         this.nextViewName = "LoadingView";
-        this.title = new JLabel("Find all Words!");
+        this.title = new JLabel("Find all words!");
 
 
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -104,6 +104,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         if (source == this.exit) {
             System.exit(0);
         }
+
     }
 
     @Override
