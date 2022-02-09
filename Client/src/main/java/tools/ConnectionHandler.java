@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class ConnectionHandler {
-    public static int timeoutTime = 180;
+    public static int timeoutTime = 10;
     public static int port = 1313;
     public static String address = "localhost";
     public static Socket socket;

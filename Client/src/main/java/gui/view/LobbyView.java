@@ -173,6 +173,7 @@ public class LobbyView extends MyView implements ActionListener {
             this.updater.cancel(true);
             String response = ConnectionHandler.sendRequest(
                     "LOBBY_CREATE_@", "lobbyCreate");
+            System.out.println("CREATE RESPONSE: " + response);
             if (response == null) {
                 returnToPreviousView(cardLayout, cardPane);
             } else {
@@ -201,9 +202,10 @@ public class LobbyView extends MyView implements ActionListener {
                 try {
                     publish(ConnectionHandler.responseTable.get("lobbies")
                             .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
-                } catch (InterruptedException ignored) {
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.out.println("interrupt lobby");
                 }
-
             }
             return null;
         }
@@ -213,6 +215,7 @@ public class LobbyView extends MyView implements ActionListener {
             String response = chunks.get(chunks.size() - 1);
             if (response == null)
             {
+                System.out.println("update lobby null response");
                 returnToPreviousView(cardLayout, cardPane);
                 return;
             }

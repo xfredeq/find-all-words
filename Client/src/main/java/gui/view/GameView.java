@@ -446,8 +446,9 @@ public class GameView extends MyView implements ActionListener {
 
                 try {
                     publish(ConnectionHandler.responseTable.get("gameNotification")
-                            .messages.poll(10, TimeUnit.SECONDS));
-                } catch (InterruptedException ignored) {
+                            .messages.poll(20, TimeUnit.SECONDS));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
             return null;
@@ -458,7 +459,10 @@ public class GameView extends MyView implements ActionListener {
         protected void process(List<String> chunks) {
             for (var chunk : chunks) {
                 if (chunk == null){
-                    System.out.println("null");
+                    System.out.println("null in game thread");
+                    shutdownAll();
+                    ConnectionHandler.endConnection();
+                    cardLayout.show(cardPane, "StartView");
                     return;
                 }
                 System.out.println("chunk: " + chunk);
