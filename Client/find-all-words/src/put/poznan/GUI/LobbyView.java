@@ -201,6 +201,7 @@ public class LobbyView extends MyView implements ActionListener {
                         return null;
                     }
                 }
+
             }
             return null;
         }
@@ -227,6 +228,7 @@ public class LobbyView extends MyView implements ActionListener {
             }
             lobbyPanel.revalidate();
             validate();
+
         }
     }
 }

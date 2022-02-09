@@ -112,7 +112,7 @@ public class Window extends JFrame implements ActionListener {
         this.views.add(new StartView());
         this.views.add(new LoadingView(this.cardLayout, this.cardPane));
         this.views.add(new LobbyView(this.cardLayout, this.cardPane));
-        this.views.add(new VoteView());
+        this.views.add(new VoteView(this.cardLayout, this.cardPane));
         this.views.add(new GameView(this.cardLayout, this.cardPane));
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {

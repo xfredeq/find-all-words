@@ -14,6 +14,11 @@ import java.util.List;
 
 public class VoteView extends MyView implements ActionListener {
 
+    private boolean selfLeave = false;
+
+    private CardLayout cardLayout;
+    private JPanel cardPane;
+
     private JLabel title;
     private JPanel buttonPanel;
 
@@ -32,9 +37,12 @@ public class VoteView extends MyView implements ActionListener {
 
     private UpdatePlayersList updatePlayersList;
     private UpdateTimer updateTimer;
+    private UpdateLeave updateLeave;
 
-    VoteView() {
+    VoteView(CardLayout cardLayout, JPanel cardPane) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.cardLayout = cardLayout;
+        this.cardPane = cardPane;
         this.setComponents();
         this.addComponents();
     }
@@ -94,7 +102,6 @@ public class VoteView extends MyView implements ActionListener {
         this.buttonPanel.add(this.cancel);
 
 
-
     }
 
     private void addComponents() {
@@ -127,19 +134,24 @@ public class VoteView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
+        this.updateLeave = new UpdateLeave();
+        this.updateLeave.execute();
         System.out.println("List of nicks updater started");
     }
 
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        String response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
+        String response = "";
+        if (!selfLeave) {
+            response = ConnectionHandler.sendRequest2("LOBBY_LEAVE_@", "lobbyLeave");
+        }
         System.out.println(Arrays.toString(response.split("_")));
+        this.timer.setTime(0);
+        this.timer.stop();
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
-
-        this.timer.stop();
-
+        this.updateLeave.cancel(true);
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -151,6 +163,47 @@ public class VoteView extends MyView implements ActionListener {
 
             System.out.println("voted");
         }
+
+    }
+
+    private class UpdateLeave extends SwingWorker<Void, String> {
+        @Override
+        protected Void doInBackground() {
+            while (!isCancelled()) {
+                Object lock = ConnectionHandler.responseTable.get("gameNotification").lock;
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                        publish(ConnectionHandler.responseTable.get("gameNotification").messages.poll());
+                    } catch (InterruptedException e) {
+                        //e.printStackTrace();
+                        return null;
+                    }
+                }
+
+
+            }
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
+            List<String> split;
+            split = new ArrayList<>(List.of(response.split("_")));
+            System.out.println(split);
+            if (response.matches("NOTIFICATION_GAME_VICTORY_.*")) {
+                selfLeave = true;
+                JOptionPane.showMessageDialog(
+                        null,
+                        "You won!.\n\n",
+                        "Enemies have left the game.\n\n",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                returnToPreviousView(cardLayout, cardPane);
+            }
+        }
+
 
     }
 
@@ -206,6 +259,7 @@ public class VoteView extends MyView implements ActionListener {
                 fakeButton.doClick();
 
             }
+
 
         }
 
