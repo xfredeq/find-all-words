@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class VoteView extends MyView implements ActionListener {
+
+    private boolean selfLeave = false;
+
     private CardLayout cardLayout;
     private JPanel cardPane;
 
@@ -34,6 +37,7 @@ public class VoteView extends MyView implements ActionListener {
 
     private UpdatePlayersList updatePlayersList;
     private UpdateTimer updateTimer;
+    private UpdateLeave updateLeave;
 
     public VoteView(CardLayout cardLayout, JPanel cardPane) {
         this.cardLayout = cardLayout;
@@ -130,6 +134,8 @@ public class VoteView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
+        this.updateLeave = new UpdateLeave();
+        this.updateLeave.execute();
         System.out.println("List of nicks updater started");
     }
 
@@ -143,6 +149,10 @@ public class VoteView extends MyView implements ActionListener {
             this.cardLayout.show(this.cardPane, "StartView");
         }
 
+        if (!selfLeave) {
+            response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+        }
+
         this.shutdownAll();
         super.returnToPreviousView(cardLayout, cardPane);
     }
@@ -151,6 +161,7 @@ public class VoteView extends MyView implements ActionListener {
     protected void shutdownAll() {
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
+        this.updateLeave.cancel(true);
         this.timer.stop();
     }
 
@@ -166,6 +177,41 @@ public class VoteView extends MyView implements ActionListener {
             }
             System.out.println("voted");
         }
+
+    }
+
+    private class UpdateLeave extends SwingWorker<Void, String> {
+        @Override
+        protected Void doInBackground() {
+            while (!isCancelled()) {
+
+                try {
+                    publish(ConnectionHandler.responseTable.get("gameNotification").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
+                }
+
+            }
+            return null;
+        }
+
+        @Override
+        protected void process(List<String> chunks) {
+            String response = chunks.get(chunks.size() - 1);
+            List<String> split;
+            split = new ArrayList<>(List.of(response.split("_")));
+            System.out.println(split);
+            if (response.matches("NOTIFICATION_GAME_VICTORY_.*")) {
+                selfLeave = true;
+                JOptionPane.showMessageDialog(
+                        null,
+                        "You won!.\n\n",
+                        "Enemies have left the game.\n\n",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                returnToPreviousView(cardLayout, cardPane);
+            }
+        }
+
 
     }
 
@@ -215,6 +261,7 @@ public class VoteView extends MyView implements ActionListener {
                 PropertiesHandler.saveProperties();
                 fakeButton.doClick();
             }
+
 
         }
 

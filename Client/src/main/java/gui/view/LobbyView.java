@@ -202,6 +202,7 @@ public class LobbyView extends MyView implements ActionListener {
                     publish(ConnectionHandler.responseTable.get("lobbies").messages.poll(100, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
                 }
+
             }
             return null;
         }
@@ -228,6 +229,7 @@ public class LobbyView extends MyView implements ActionListener {
             }
             lobbyPanel.revalidate();
             validate();
+
         }
     }
 }
