@@ -23,8 +23,8 @@ public class GameView extends MyView implements ActionListener {
             ' ', ' ', ' ', ' ', ' ', ' ',
             ' ', ' ', ' ', ' ', ' ', ' ',
             ' ', ' ', ' ', ' ', ' ', ' '));
-    private CardLayout cardLayout;
-    private JPanel cardPane;
+    private final CardLayout cardLayout;
+    private final JPanel cardPane;
     private boolean gameFinished;
     private JPanel enterPanel;
     private JLabel enterTitle;
@@ -80,7 +80,6 @@ public class GameView extends MyView implements ActionListener {
                 l.weighty = 1;
 
 
-                //System.out.println(this.lettersList);
                 this.letters.add(new JLabel(this.lettersList.get(6 * i + j).toString()), l);
 
 
@@ -332,6 +331,9 @@ public class GameView extends MyView implements ActionListener {
     public void onShowAction() {
         this.gameFinished = false;
 
+        for (int i = 0; i < lettersList.size(); i++) {
+            lettersList.set(i, ' ');
+        }
         this.addLetters();
 
         this.enterTextField.setText("");
@@ -362,6 +364,7 @@ public class GameView extends MyView implements ActionListener {
                         "CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
                 if (response == null) {
                     this.shutdownAll();
+                    ConnectionHandler.endConnection();
                     this.cardLayout.show(this.cardPane, "StartView");
                 } else if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
 
@@ -404,12 +407,6 @@ public class GameView extends MyView implements ActionListener {
     }
 
     @Override
-    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        shutdownAll();
-        super.returnToPreviousView(cardLayout, cardPane);
-    }
-
-    @Override
     protected void shutdownAll() {
         gameTimer.stop();
         this.updateTimer.cancel(true);
@@ -441,14 +438,22 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest("GAME_PLAYERS_@", "gameNotification"));
+            String response = ConnectionHandler.sendRequest("GAME_PLAYERS_@", "gameNotification");
+            if (response == null) {
+                shutdownAll();
+                ConnectionHandler.endConnection();
+                cardLayout.show(cardPane, "StartView");
+                return null;
+            }
+            publish(response);
             while (!isCancelled()) {
-
                 try {
-                    publish(ConnectionHandler.responseTable.get("gameNotification")
-                            .messages.poll(20, TimeUnit.SECONDS));
+                    response = ConnectionHandler.responseTable.get("gameNotification")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS);
+                    publish(response != null ? response : "NOTIFICATION_GAME_TIMEOUT");
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
+                    return null;
                 }
             }
             return null;
@@ -458,13 +463,6 @@ public class GameView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             for (var chunk : chunks) {
-                if (chunk == null){
-                    System.out.println("null in game thread");
-                    shutdownAll();
-                    ConnectionHandler.endConnection();
-                    cardLayout.show(cardPane, "StartView");
-                    return;
-                }
                 System.out.println("chunk: " + chunk);
                 List<String> split;
                 split = new ArrayList<>(List.of(chunk.split("_")));
@@ -491,7 +489,6 @@ public class GameView extends MyView implements ActionListener {
                 } else if ("WORD".equals(split.get(2))) {
                     JLabel word = new JLabel(split.get(4), SwingConstants.CENTER);
                     word.setPreferredSize(new Dimension(100, 20));
-                    //String result = split.get(3);
                     if ("SUCCESS".equals(split.get(3))) {
                         word.setBackground(Color.GREEN);
                     } else {
@@ -523,12 +520,8 @@ public class GameView extends MyView implements ActionListener {
                         playersPanel.add(l);
                     }
                     if (gameFinished) {
-                        new Scoreboard(treeMap);
-                        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
-                        if (response == null){
-                            System.out.println("null response");
-                        }
                         fakeButton.doClick();
+                        new Scoreboard(treeMap);
                     }
 
                     playersPanel.revalidate();
@@ -563,39 +556,30 @@ public class GameView extends MyView implements ActionListener {
                                     JOptionPane.INFORMATION_MESSAGE
                             );
                         }
-
                     }
-
                 } else if ("VICTORY".equals(split.get(2))) {
-
-                    if ("LEFT".equals(split.get(4))) {
-                        JOptionPane.showMessageDialog(
-                                null,
-                                "Enemies left the game. You won!",
-                                "Game won.",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
-
-
-                    } else if ("PLACE".equals(split.get(3))) {
+                    fakeButton.doClick();
+                    if ("PLACE".equals(split.get(3))) {
                         JOptionPane.showMessageDialog(
                                 null,
                                 "You won the game!\n" +
                                         "Your total score is " + split.get(6) +
-                                "\nEnemies have left the game",
-                                "Game won.",
+                                        "\n\nOther enemies have left the game",
+                                "Game Victory",
                                 JOptionPane.INFORMATION_MESSAGE
                         );
-                        fakeButton.doClick();
+
 
                     }
                 } else if ("FINISHED".equals(split.get(2))) {
                     gameFinished = true;
 
+                } else {
+                    shutdownAll();
+                    ConnectionHandler.endConnection();
+                    cardLayout.show(cardPane, "StartView");
                 }
             }
-
         }
-
     }
 }

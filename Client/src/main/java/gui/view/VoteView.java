@@ -238,7 +238,7 @@ public class VoteView extends MyView implements ActionListener {
             try {
                 String response = ConnectionHandler.responseTable.get("gameStart")
                         .messages.poll(10 + ConnectionHandler.requestTimeout, TimeUnit.SECONDS);
-                publish(response != null ? response : "NOTIFICATION_GAME_START_TIMEOUT");
+                publish(response != null ? response : "NOTIFICATION_START_TIMEOUT");
             } catch (InterruptedException e) {
                 //e.printStackTrace();
                 return null;
@@ -257,7 +257,7 @@ public class VoteView extends MyView implements ActionListener {
                     updateLeave = new UpdateLeave();
                     updateLeave.execute();
 
-                    timer = new GameTimer();
+                    //timer = new GameTimer();
                     timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                     timer.start();
                     vote.setEnabled(false);

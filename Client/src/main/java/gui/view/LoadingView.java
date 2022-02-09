@@ -9,7 +9,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.Semaphore;
 
-import static tools.ConnectionHandler.address;
 
 
 public class LoadingView extends MyView implements PropertyChangeListener {
@@ -136,7 +135,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             for (int i = 0; i < 5; i++) {
                 if (i == 0) {
-                    address = PropertiesHandler.getProperty("serverAddress");
+                    ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
                     ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
                 } else if (i == 1) {
                     ConnectionHandler.initializeTable();
@@ -208,7 +207,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             }
 
-            System.out.println(address);
+            System.out.println(ConnectionHandler.address);
             System.out.println(ConnectionHandler.port);
 
             try {
