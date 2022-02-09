@@ -16,8 +16,8 @@ import java.net.UnknownHostException;
 public class ConnectionDialog extends JDialog implements ActionListener, FocusListener {
 
     private JPanel panel;
-    private JLabel server, addressLabel, portLabel;
-    private JTextField address, port;
+    private JLabel server, addressLabel, portLabel, requestTimeoutLabel, generalTimeoutLabel;
+    private JTextField address, port, requestTimeout, generalTimeout;
     private JButton confirm, cancel, dflt;
 
 
@@ -55,19 +55,27 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
 
         this.server = new JLabel("Server options:");
         this.addressLabel = new JLabel("IP address:");
+        this.requestTimeoutLabel = new JLabel("Request timeout:");
+        this.generalTimeoutLabel = new JLabel("General timeout:");
         this.portLabel = new JLabel("Port:");
 
         this.address = new JTextField(PropertiesHandler.getProperty("defaultAddress"));
         this.port = new JTextField(PropertiesHandler.getProperty("defaultPort"));
+        this.requestTimeout = new JTextField(PropertiesHandler.getProperty("requestTimeout"));
+        this.generalTimeout = new JTextField(PropertiesHandler.getProperty("generalTimeout"));
 
         this.server.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.addressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.portLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        this.generalTimeoutLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        this.requestTimeoutLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.address.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.port.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         this.address.setMaximumSize(new Dimension(200, 40));
         this.port.setMaximumSize(new Dimension(100, 40));
+        this.requestTimeout.setMaximumSize(new Dimension(100, 40));
+        this.generalTimeout.setMaximumSize(new Dimension(100, 40));
 
         this.server.setForeground(Color.BLACK);
         this.server.setFont(new Font("Arial", Font.BOLD, 25));
@@ -82,8 +90,17 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
         this.portLabel.setForeground(Color.BLACK);
         this.portLabel.setFont(new Font("Arial", Font.ITALIC, 20));
 
+        this.requestTimeoutLabel.setForeground(Color.BLACK);
+        this.requestTimeoutLabel.setFont(new Font("Arial", Font.ITALIC, 20));
+
+        this.generalTimeoutLabel.setForeground(Color.BLACK);
+        this.generalTimeoutLabel.setFont(new Font("Arial", Font.ITALIC, 20));
+
         this.port.setHorizontalAlignment(JTextField.CENTER);
         this.port.addFocusListener(this);
+
+        this.requestTimeout.setHorizontalAlignment(JTextField.CENTER);
+        this.generalTimeout.setHorizontalAlignment(JTextField.CENTER);
     }
 
     private void addComponents() {
@@ -96,13 +113,21 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
         this.add(this.portLabel);
         this.add(this.port);
         this.add(Box.createVerticalGlue());
+        this.add(this.generalTimeoutLabel);
+        this.add(this.generalTimeout);
+        this.add(Box.createVerticalGlue());
+        this.add(this.requestTimeoutLabel);
+        this.add(this.requestTimeout);
+        this.add(Box.createVerticalGlue());
         this.add(this.panel);
         this.add(Box.createVerticalGlue());
     }
 
     private void setDefault() {
-        this.address.setText("127.0.0.1");
-        this.port.setText("1313");
+        this.address.setText(PropertiesHandler.getProperty("defaultAddress"));
+        this.port.setText("defaultPort");
+        this.generalTimeout.setText("generalTimeout");
+        this.requestTimeout.setText("requestTimeout");
         this.address.setBackground(Color.WHITE);
         this.port.setBackground(Color.WHITE);
     }
@@ -140,6 +165,8 @@ public class ConnectionDialog extends JDialog implements ActionListener, FocusLi
             if (validateAddress() && validatePort()) {
                 PropertiesHandler.setProperty("serverAddress", this.address.getText());
                 PropertiesHandler.setProperty("serverPort", this.port.getText());
+                PropertiesHandler.setProperty("generalTimeout", this.generalTimeout.getText());
+                PropertiesHandler.setProperty("requestTimeout", this.requestTimeout.getText());
                 PropertiesHandler.saveProperties();
                 dispose();
             }
