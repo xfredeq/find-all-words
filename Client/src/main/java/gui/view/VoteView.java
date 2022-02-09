@@ -138,17 +138,20 @@ public class VoteView extends MyView implements ActionListener {
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
         if (response == null) {
-            this.updatePlayersList.cancel(true);
-            this.updateTimer.cancel(true);
-            this.timer.stop();
+            this.shutdownAll();
+            ConnectionHandler.endConnection();
             this.cardLayout.show(this.cardPane, "StartView");
         }
 
+        this.shutdownAll();
+        super.returnToPreviousView(cardLayout, cardPane);
+    }
+
+    @Override
+    protected void shutdownAll() {
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
         this.timer.stop();
-
-        super.returnToPreviousView(cardLayout, cardPane);
     }
 
 
@@ -157,10 +160,8 @@ public class VoteView extends MyView implements ActionListener {
         if (ae.getActionCommand().equals("Vote")) {
             String response = ConnectionHandler.sendRequest("LOBBY_VOTE_@", "selfVote");
             if (response == null) {
-                this.updatePlayersList.cancel(true);
-                this.updateTimer.cancel(true);
-
-                this.timer.stop();
+                this.shutdownAll();
+                ConnectionHandler.endConnection();
                 this.cardLayout.show(this.cardPane, "StartView");
             }
             System.out.println("voted");
@@ -189,6 +190,12 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
+            if (response == null) {
+                shutdownAll();
+                ConnectionHandler.endConnection();
+                cardLayout.show(cardPane, "StartView");
+                return;
+            }
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
             System.out.println(split);
@@ -207,7 +214,6 @@ public class VoteView extends MyView implements ActionListener {
                 PropertiesHandler.setProperty("game_duration", split.get(3));
                 PropertiesHandler.saveProperties();
                 fakeButton.doClick();
-
             }
 
         }
@@ -218,7 +224,9 @@ public class VoteView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes"));
+            String response = ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes");
+            System.out.println("RESP: " + response);
+            publish(response);
             ConnectionHandler.responseTable.get("playersVotes").messages.clear();
             while (!isCancelled()) {
                 try {
@@ -233,6 +241,12 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
+            if (response == null) {
+                shutdownAll();
+                ConnectionHandler.endConnection();
+                cardLayout.show(cardPane, "StartView");
+                return;
+            }
             List<String> split;
             playersPanel.removeAll();
             playersPanel.revalidate();

@@ -48,7 +48,6 @@ public class LobbyView extends MyView implements ActionListener {
         this.previousViewName = "StartView";
         this.title = new JLabel("Lobbies");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        //title.setAlignmentY(Component.TOP_ALIGNMENT);
         title.setFont(new Font("Verdana", Font.BOLD, 80));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.GREEN);
@@ -91,7 +90,6 @@ public class LobbyView extends MyView implements ActionListener {
     private void addComponents() {
         add(Box.createVerticalGlue());
         add(this.title);
-        //add(Box.createVerticalGlue());
         add(this.nickname);
         add(Box.createVerticalGlue());
         add(this.lobbyPanel);
@@ -119,15 +117,11 @@ public class LobbyView extends MyView implements ActionListener {
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
         System.out.println("updater started");
-
     }
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        this.updater.cancel(true);
-
-        ConnectionHandler.endConnection();
-
+        this.shutdownAll();
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -152,6 +146,12 @@ public class LobbyView extends MyView implements ActionListener {
             return false;
         }
 
+    }
+
+    @Override
+    protected void shutdownAll() {
+        this.updater.cancel(true);
+        ConnectionHandler.endConnection();
     }
 
 

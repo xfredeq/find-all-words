@@ -49,7 +49,6 @@ public class Window extends JFrame implements ActionListener {
         this.views = new ArrayList<>();
         this.cardPane = new JPanel(this.cardLayout);
 
-
         this.cardPane.setBackground(Color.LIGHT_GRAY);
 
         this.addViews();

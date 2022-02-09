@@ -2,13 +2,11 @@ package tools;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Triplet {
+public class MessageQueue {
     public final String regex;
     public final LinkedBlockingQueue<String> messages;
-    public final Object lock;
 
-    public Triplet(String regex) {
-        this.lock = new Object();
+    public MessageQueue(String regex) {
         this.regex = regex;
         this.messages = new LinkedBlockingQueue<>();
     }

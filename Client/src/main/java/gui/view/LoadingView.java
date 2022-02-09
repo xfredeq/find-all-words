@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import static tools.ConnectionHandler.address;
@@ -151,8 +150,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     String response = ConnectionHandler.sendRequest(
                             "GET_LOBBYSIZE_@", "lobbySize");
                     System.out.println(response);
-                    if (response == null)
-                    {
+                    if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
@@ -160,17 +158,20 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
 
-                    String responseRounds = ConnectionHandler.sendRequest2(
+                    String responseRounds = ConnectionHandler.sendRequest(
                             "GET_ROUNDS_@", "roundsNumber"
                     );
+                    if (responseRounds == null) {
+                        returnToPreviousView(cardLayout, cardPane);
+                        return null;
+                    }
                     String[] splitRounds = responseRounds.split("_");
                     PropertiesHandler.setProperty("roundsNumber", splitRounds[splitRounds.length - 1]);
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
                     String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@", "nickname");
-                    if (response == null)
-                    {
+                    if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
@@ -185,10 +186,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     } else {
                         enter.setVisible(false);
                         System.out.println("NOT UNIQUE NICK");
-                        /*JDialog dialog = new JDialog(null, "ACHTUNG!", Dialog.ModalityType.MODELESS);
-                        JOptionPane optionPane = new JOptionPane("Your nick is already used!", JOptionPane.ERROR_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-                        dialog.pack();
-                        dialog.setContentPane(optionPane);*/
                         JOptionPane.showMessageDialog(
                                 JOptionPane.getFrameForComponent(null),
                                 "Your nick is already used!",

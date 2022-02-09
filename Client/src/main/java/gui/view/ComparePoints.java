@@ -1,4 +1,4 @@
-package put.poznan.tools;
+package gui.view;
 
 import java.util.*;
 

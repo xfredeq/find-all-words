@@ -15,7 +15,7 @@ public class ConnectionHandler {
     public static int port = 1313;
     public static String address = "localhost";
     public static Socket socket;
-    public static HashMap<String, Triplet> responseTable;
+    public static HashMap<String, MessageQueue> responseTable;
     private static PrintWriter out;
     private static BufferedReader in;
     private static MessageGetter messageGetter;
@@ -29,7 +29,6 @@ public class ConnectionHandler {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             messageGetter = new MessageGetter();
         } catch (IOException e) {
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -37,20 +36,20 @@ public class ConnectionHandler {
 
     public static void initializeTable() {
         responseTable = new HashMap<>();
-        responseTable.put("lobbySize", new Triplet("RESPONSE_LOBBYSIZE_[3-9]"));
-        responseTable.put("nickname", new Triplet("RESPONSE_NICKNAME_.{7}_.*"));
-        responseTable.put("lobbiesEntry", new Triplet("RESPONSE_LOBBIES_COUNT_[0-9]+_.*"));
-        responseTable.put("lobbies", new Triplet("NOTIFICATION_LOBBIES_COUNT_[0-9]+_.*"));
-        responseTable.put("lobbyJoin", new Triplet("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+"));
-        responseTable.put("lobbyCreate", new Triplet("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
-        responseTable.put("lobbyLeave", new Triplet("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
-        responseTable.put("playersVotes", new Triplet("NOTIFICATION_LOBBY_PLAYERS_[0-9]_.{4,}_[0-1]_.*"));
-        responseTable.put("selfVote", new Triplet("RESPONSE_LOBBY_VOTE_.{7}_[0-1]"));
-        responseTable.put("timerStart", new Triplet("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
-        responseTable.put("gameStart", new Triplet("NOTIFICATION_START_GAME_[0-9]+"));
-        responseTable.put("checkWord", new Triplet("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
-        responseTable.put("gameNotification", new Triplet("NOTIFICATION_GAME_.*"));
-        responseTable.put("roundsNumber", new Triplet("RESPONSE_ROUNDS_[0-9]"));
+        responseTable.put("lobbySize", new MessageQueue("RESPONSE_LOBBYSIZE_[3-9]"));
+        responseTable.put("nickname", new MessageQueue("RESPONSE_NICKNAME_.{7}_.*"));
+        responseTable.put("lobbiesEntry", new MessageQueue("RESPONSE_LOBBIES_COUNT_[0-9]+_.*"));
+        responseTable.put("lobbies", new MessageQueue("NOTIFICATION_LOBBIES_COUNT_[0-9]+_.*"));
+        responseTable.put("lobbyJoin", new MessageQueue("RESPONSE_LOBBY_JOIN_.{7}_[0-9]+"));
+        responseTable.put("lobbyCreate", new MessageQueue("RESPONSE_LOBBY_CREATE_.{7}_[0-9]+"));
+        responseTable.put("lobbyLeave", new MessageQueue("RESPONSE_LOBBY_LEAVE_.{7}_[0-9]+"));
+        responseTable.put("playersVotes", new MessageQueue("NOTIFICATION_LOBBY_PLAYERS_[0-9]_.{4,}_[0-1]_.*"));
+        responseTable.put("selfVote", new MessageQueue("RESPONSE_LOBBY_VOTE_.{7}_[0-1]"));
+        responseTable.put("timerStart", new MessageQueue("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
+        responseTable.put("gameStart", new MessageQueue("NOTIFICATION_START_GAME_[0-9]+"));
+        responseTable.put("checkWord", new MessageQueue("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
+        responseTable.put("gameNotification", new MessageQueue("NOTIFICATION_GAME_.*"));
+        responseTable.put("roundsNumber", new MessageQueue("RESPONSE_ROUNDS_[0-9]"));
     }
 
 
@@ -80,7 +79,6 @@ public class ConnectionHandler {
     public static String sendRequest(String request, String type) {
         out.print(request);
         out.flush();
-        Object lock = ConnectionHandler.responseTable.get(type).lock;
         try {
             return ConnectionHandler.responseTable.get(type).messages.poll(2, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -97,10 +95,10 @@ public class ConnectionHandler {
             while (!isCancelled()) {
                 try {
                     String message = in.readLine();
-                    for (Map.Entry<String, Triplet> entry : responseTable.entrySet()) {
-                        Triplet triplet = entry.getValue();
-                        if (message.matches(triplet.regex)) {
-                            triplet.messages.add(message);
+                    for (Map.Entry<String, MessageQueue> entry : responseTable.entrySet()) {
+                        MessageQueue messageQueue = entry.getValue();
+                        if (message.matches(messageQueue.regex)) {
+                            messageQueue.messages.add(message);
                             break;
                         }
                     }

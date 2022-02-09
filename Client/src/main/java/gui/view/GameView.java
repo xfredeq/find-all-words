@@ -8,16 +8,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class GameView extends MyView implements ActionListener {
-    private CardLayout cardLayout;
-    private JPanel cardPane;
-
-    private boolean gameFinished;
-
     private final GridBagConstraints c;
     private final ArrayList<Character> lettersList = new ArrayList<>(List.of(
             'w', 'a', 'o', 'r', 'd', ' ',
@@ -26,7 +22,9 @@ public class GameView extends MyView implements ActionListener {
             'd', 'a', ' ', ' ', ' ', ' ',
             'w', ' ', ' ', ' ', ' ', ' ',
             'a', ' ', ' ', ' ', ' ', ' '));
-
+    private CardLayout cardLayout;
+    private JPanel cardPane;
+    private boolean gameFinished;
     private JPanel enterPanel;
     private JLabel enterTitle;
     private JTextField enterTextField;
@@ -54,6 +52,8 @@ public class GameView extends MyView implements ActionListener {
 
     private UpdateData updateData;
     private UpdateTimer updateTimer;
+
+    private JButton fakeButton;
 
 
     public GameView(CardLayout cardLayout, JPanel cardPane) {
@@ -225,6 +225,8 @@ public class GameView extends MyView implements ActionListener {
 
         this.gameFinished = false;
 
+        this.fakeButton = new JButton();
+        this.nextViewButton = fakeButton;
 
     }
 
@@ -351,12 +353,10 @@ public class GameView extends MyView implements ActionListener {
             if (!wrongLetters) {
                 response = ConnectionHandler.sendRequest(
                         "CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
-                if (response == null)
-                {
+                if (response == null) {
                     this.shutdownAll();
                     this.cardLayout.show(this.cardPane, "StartView");
-                }
-                else if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
+                } else if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
 
                     for (int i = 0; i < enterTextField.getText().length(); i++) {
                         //System.out.println("letter removed" + enterTextField.getText().charAt(i));
@@ -388,18 +388,22 @@ public class GameView extends MyView implements ActionListener {
 
     @Override
     public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-        gameTimer.stop();
-        this.updateTimer.cancel(true);
-        this.updateData.cancel(true);
+        ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+        shutdownAll();
         return super.moveToNextView(cardLayout, cardPane);
     }
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
+        shutdownAll();
+        super.returnToPreviousView(cardLayout, cardPane);
+    }
+
+    @Override
+    protected void shutdownAll() {
         gameTimer.stop();
         this.updateTimer.cancel(true);
         this.updateData.cancel(true);
-        super.returnToPreviousView(cardLayout, cardPane);
     }
 
 
@@ -427,7 +431,7 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest2("GAME_PLAYERS_@", "gameNotification"));
+            publish(ConnectionHandler.sendRequest("GAME_PLAYERS_@", "gameNotification"));
             while (!isCancelled()) {
 
 
@@ -541,6 +545,7 @@ public class GameView extends MyView implements ActionListener {
                     }
 
                 } else if ("VICTORY".equals(split.get(2))) {
+                    fakeButton.doClick();
                     if ("LEFT".equals(split.get(4))) {
                         JOptionPane.showMessageDialog(
                                 null,
@@ -558,7 +563,7 @@ public class GameView extends MyView implements ActionListener {
                                 "Game won.",
                                 JOptionPane.INFORMATION_MESSAGE
                         );
-
+                        moveToNextView(cardLayout, cardPane);
 
                     }
                 } else if ("FINISHED".equals(split.get(2))) {
