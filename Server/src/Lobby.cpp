@@ -32,12 +32,15 @@ void Lobby::removePlayer(Player *player)
     if (this->lobbyPlayers.size() == 0)
     {
         lobbies.erase(this);
-        delete this;
+
         player->notifyAllWaiting();
-        return;
+        delete this;
     }
-    player->notifyAllInLobby();
-    player->notifyAllWaiting();
+    else
+    {
+        player->notifyAllInLobby();
+        player->notifyAllWaiting();
+    }
 }
 
 bool Lobby::checkGameStart()
@@ -56,6 +59,7 @@ bool Lobby::checkGameStart()
             count++;
         }
     }
+    this->gameStarted = true;
     return count > size / 2;
 }
 
@@ -63,7 +67,6 @@ void Lobby::startGame()
 {
     cout << "CD THREAD: " << this_thread::get_id() << endl;
     string message = "NOTIFICATION_START_COUNTDOWN_10\n";
-    this->gameStarted = true;
     for (auto player : this->lobbyPlayers)
     {
         player->write((char *)message.c_str(), message.size());
@@ -74,10 +77,10 @@ void Lobby::startGame()
     {
         Player *winner = (Player *)*this->lobbyPlayers.begin();
 
-        string notification = "NOTIFICATION_GAME_VICTORY_ENEMIES_LEFT\n";
+        string notification = "NOTIFICATION_COUNTDOWN_LEAVE\n";
 
         winner->write((char *)notification.c_str(), notification.size());
-        this->removePlayer(winner);
+        //this->removePlayer(winner);
         return;
     }
 
@@ -93,6 +96,7 @@ void Lobby::startGame()
 void Lobby::startCountdownThread()
 {
     this->countdownThread = thread(&Lobby::startGame, this);
+    this->countdownThread.detach();
 }
 
 void Lobby::game()
