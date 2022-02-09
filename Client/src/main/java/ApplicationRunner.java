@@ -1,4 +1,4 @@
-import gui.todo.Window;
+import gui.helpers.Window;
 import tools.PropertiesHandler;
 
 import javax.swing.*;

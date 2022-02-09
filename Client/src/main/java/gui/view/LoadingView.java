@@ -148,14 +148,23 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 } else if (i == 3) {
                     String response = ConnectionHandler.sendRequest(
                             "GET_LOBBYSIZE_@", "lobbySize");
-
+                    System.out.println(response);
+                    if (response == null)
+                    {
+                        returnToPreviousView(cardLayout, cardPane);
+                        return null;
+                    }
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
                     String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@", "nickname");
-
+                    if (response == null)
+                    {
+                        returnToPreviousView(cardLayout, cardPane);
+                        return null;
+                    }
 
                     String[] split = response.split("_");
 

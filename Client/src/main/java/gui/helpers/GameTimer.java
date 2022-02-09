@@ -1,4 +1,4 @@
-package gui.todo;
+package gui.helpers;
 
 import javax.swing.*;
 import java.awt.*;

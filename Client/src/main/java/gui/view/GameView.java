@@ -1,6 +1,6 @@
 package gui.view;
 
-import gui.todo.GameTimer;
+import gui.helpers.GameTimer;
 import tools.ConnectionHandler;
 import tools.PropertiesHandler;
 
@@ -10,8 +10,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class GameView extends MyView implements ActionListener {
+    private CardLayout cardLayout;
+    private JPanel cardPane;
 
     private final GridBagConstraints c;
     private final ArrayList<Character> lettersList = new ArrayList<>(List.of(
@@ -44,7 +47,9 @@ public class GameView extends MyView implements ActionListener {
     private UpdatePlayersList updatePlayersList;
 
 
-    public GameView() {
+    public GameView(CardLayout cardLayout, JPanel cardPane) {
+        this.cardLayout = cardLayout;
+        this.cardPane = cardPane;
         this.setLayout(new GridBagLayout());
         this.c = new GridBagConstraints();
 
@@ -327,8 +332,14 @@ public class GameView extends MyView implements ActionListener {
                 }
             }
             if (!wrongLetters) {
-                response = ConnectionHandler.sendRequest("CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
-                if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
+                response = ConnectionHandler.sendRequest(
+                        "CHECK_WORD_" + enterTextField.getText() + "_@", "checkWord");
+                if (response == null)
+                {
+                    this.shutdownAll();
+                    this.cardLayout.show(this.cardPane, "StartView");
+                }
+                else if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
 
                     for (int i = 0; i < enterTextField.getText().length(); i++) {
                         //System.out.println("letter removed" + enterTextField.getText().charAt(i));
@@ -383,18 +394,20 @@ public class GameView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            publish(ConnectionHandler.sendRequest("GAME_PLAYERS_@", "playersList"));
+            String response = ConnectionHandler.sendRequest("GAME_PLAYERS_@", "playersList");
+            if (response == null)
+            {
+                shutdownAll();
+                cardLayout.show(cardPane, "StartView");
+            }
+            publish(response);
             while (!isCancelled()) {
-                Object lock = ConnectionHandler.responseTable.get("playersList").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("playersList").messages.poll());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
+
+                try {
+                    publish(ConnectionHandler.responseTable.get("playersList").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
+
             }
             return null;
         }

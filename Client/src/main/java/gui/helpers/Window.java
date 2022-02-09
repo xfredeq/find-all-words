@@ -1,4 +1,4 @@
-package gui.todo;
+package gui.helpers;
 
 
 import gui.view.*;
@@ -103,10 +103,10 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
-        this.views.add(new LoadingView(cardLayout, cardPane));
+        this.views.add(new LoadingView(this.cardLayout, this.cardPane));
         this.views.add(new LobbyView(this.cardLayout, this.cardPane));
-        this.views.add(new VoteView());
-        this.views.add(new GameView());
+        this.views.add(new VoteView(this.cardLayout, this.cardPane));
+        this.views.add(new GameView(this.cardLayout, this.cardPane));
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);
@@ -132,7 +132,7 @@ public class Window extends JFrame implements ActionListener {
                 dispose();
             }
 
-        } else if (source == this.about) { // #TODO text from properties
+        } else if (source == this.about) { //
             JOptionPane.showMessageDialog(this, "TODO", "About", JOptionPane.INFORMATION_MESSAGE);
 
         } else if (source == this.connectionSettings) {

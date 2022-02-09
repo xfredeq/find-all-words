@@ -1,6 +1,6 @@
 package gui.view;
 
-import gui.todo.Lobby;
+import gui.helpers.Lobby;
 import tools.ConnectionHandler;
 import tools.PropertiesHandler;
 
@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class LobbyView extends MyView implements ActionListener {
 
@@ -59,8 +60,6 @@ public class LobbyView extends MyView implements ActionListener {
         nickname.setForeground(Color.BLACK);
 
         this.lobbies = new HashMap<>();
-
-        //#TODO ButtonPanelFactory
 
         this.join = new JButton("Join lobby");
         this.join.setVisible(false);
@@ -139,6 +138,10 @@ public class LobbyView extends MyView implements ActionListener {
         int nr = this.selectedLobby.getNumber();
         String response = ConnectionHandler.sendRequest(
                 "LOBBY_JOIN_" + nr + "_@", "lobbyJoin");
+        if (response == null) {
+            this.returnToPreviousView(cardLayout, cardPane);
+            return false;
+        }
 
         String[] split = response.split("_");
         System.out.println(Arrays.toString(split));
@@ -170,12 +173,16 @@ public class LobbyView extends MyView implements ActionListener {
             this.updater.cancel(true);
             String response = ConnectionHandler.sendRequest(
                     "LOBBY_CREATE_@", "lobbyCreate");
-            String[] split = response.split("_");
-            System.out.println(Arrays.toString(split));
-            if ("SUCCESS".equals(split[split.length - 2])) {
-                cardLayout.show(cardPane, this.nextViewName);
+            if (response == null) {
+                returnToPreviousView(cardLayout, cardPane);
             } else {
-                System.out.println("LOBBY CREATE FAILURE");
+                String[] split = response.split("_");
+                System.out.println(Arrays.toString(split));
+                if ("SUCCESS".equals(split[split.length - 2])) {
+                    cardLayout.show(cardPane, this.nextViewName);
+                } else {
+                    System.out.println("LOBBY CREATE FAILURE");
+                }
             }
 
 
@@ -191,15 +198,9 @@ public class LobbyView extends MyView implements ActionListener {
             publish(ConnectionHandler.sendRequest("GET_LOBBIES_@", "lobbiesEntry"));
 
             while (!isCancelled()) {
-                Object lock = ConnectionHandler.responseTable.get("lobbies").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("lobbies").messages.poll());
-                    } catch (InterruptedException e) {
-                        //e.printStackTrace();
-                        return null;
-                    }
+                try {
+                    publish(ConnectionHandler.responseTable.get("lobbies").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
             }
             return null;

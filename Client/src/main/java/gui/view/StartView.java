@@ -104,13 +104,6 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         if (source == this.exit) {
             System.exit(0);
         }
-
-        //#TODO nick correctness
-        if (e.getActionCommand().equals("Connect")) {
-            //this.checkNick = new CheckNick();
-            //this.checkNick.execute();
-        }
-
     }
 
     @Override

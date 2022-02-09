@@ -1,6 +1,6 @@
 package gui.view;
 
-import gui.todo.GameTimer;
+import gui.helpers.GameTimer;
 import tools.ConnectionHandler;
 import tools.PropertiesHandler;
 
@@ -9,10 +9,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class VoteView extends MyView implements ActionListener {
+    private CardLayout cardLayout;
+    private JPanel cardPane;
 
     private JLabel title;
     private JPanel buttonPanel;
@@ -33,7 +35,9 @@ public class VoteView extends MyView implements ActionListener {
     private UpdatePlayersList updatePlayersList;
     private UpdateTimer updateTimer;
 
-    public VoteView() {
+    public VoteView(CardLayout cardLayout, JPanel cardPane) {
+        this.cardLayout = cardLayout;
+        this.cardPane = cardPane;
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setComponents();
         this.addComponents();
@@ -133,10 +137,15 @@ public class VoteView extends MyView implements ActionListener {
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
         String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
-        System.out.println(Arrays.toString(response.split("_")));
+        if (response == null) {
+            this.updatePlayersList.cancel(true);
+            this.updateTimer.cancel(true);
+            this.timer.stop();
+            this.cardLayout.show(this.cardPane, "StartView");
+        }
+
         this.updatePlayersList.cancel(true);
         this.updateTimer.cancel(true);
-
         this.timer.stop();
 
         super.returnToPreviousView(cardLayout, cardPane);
@@ -146,8 +155,14 @@ public class VoteView extends MyView implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getActionCommand().equals("Vote")) {
-            ConnectionHandler.sendRequest("LOBBY_VOTE_@", "selfVote");
+            String response = ConnectionHandler.sendRequest("LOBBY_VOTE_@", "selfVote");
+            if (response == null) {
+                this.updatePlayersList.cancel(true);
+                this.updateTimer.cancel(true);
 
+                this.timer.stop();
+                this.cardLayout.show(this.cardPane, "StartView");
+            }
             System.out.println("voted");
         }
 
@@ -158,25 +173,14 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected Void doInBackground() {
             while (!isCancelled()) {
-                Object lock = ConnectionHandler.responseTable.get("timerStart").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("timerStart").messages.poll());
-                    } catch (InterruptedException e) {
-                        //e.printStackTrace();
-                        return null;
-                    }
+                try {
+                    publish(ConnectionHandler.responseTable.get("timerStart").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
-                lock = ConnectionHandler.responseTable.get("gameStart").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("gameStart").messages.poll());
-                    } catch (InterruptedException e) {
-                        //e.printStackTrace();
-                        return null;
-                    }
+
+                try {
+                    publish(ConnectionHandler.responseTable.get("gameStart").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
             }
             return null;
@@ -217,15 +221,9 @@ public class VoteView extends MyView implements ActionListener {
             publish(ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes"));
             ConnectionHandler.responseTable.get("playersVotes").messages.clear();
             while (!isCancelled()) {
-                Object lock = ConnectionHandler.responseTable.get("playersVotes").lock;
-                synchronized (lock) {
-                    try {
-                        lock.wait();
-                        publish(ConnectionHandler.responseTable.get("playersVotes").messages.poll());
-                    } catch (InterruptedException e) {
-                        //e.printStackTrace();
-                        return null;
-                    }
+                try {
+                    publish(ConnectionHandler.responseTable.get("playersVotes").messages.poll(100, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
             }
             return null;
