@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class ConnectionHandler {
+    public static int timeoutTime = 180;
     public static int port = 1313;
     public static String address = "localhost";
     public static Socket socket;
@@ -47,6 +48,7 @@ public class ConnectionHandler {
         responseTable.put("selfVote", new MessageQueue("RESPONSE_LOBBY_VOTE_.{7}_[0-1]"));
         responseTable.put("timerStart", new MessageQueue("NOTIFICATION_START_COUNTDOWN_[0-9]+"));
         responseTable.put("gameStart", new MessageQueue("NOTIFICATION_START_GAME_[0-9]+"));
+        responseTable.put("countdownLeave", new MessageQueue("NOTIFICATION_COUNTDOWN_LEAVE"));
         responseTable.put("checkWord", new MessageQueue("RESPONSE_CHECK_WORD_.{7}_[0-9]+"));
         responseTable.put("gameNotification", new MessageQueue("NOTIFICATION_GAME_.*"));
         responseTable.put("roundsNumber", new MessageQueue("RESPONSE_ROUNDS_[0-9]"));

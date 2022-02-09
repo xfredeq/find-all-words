@@ -199,7 +199,8 @@ public class LobbyView extends MyView implements ActionListener {
 
             while (!isCancelled()) {
                 try {
-                    publish(ConnectionHandler.responseTable.get("lobbies").messages.poll(100, TimeUnit.SECONDS));
+                    publish(ConnectionHandler.responseTable.get("lobbies")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
                 }
 
@@ -210,6 +211,11 @@ public class LobbyView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
+            if (response == null)
+            {
+                returnToPreviousView(cardLayout, cardPane);
+                return;
+            }
             System.out.println("lobbies message: " + response);
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));

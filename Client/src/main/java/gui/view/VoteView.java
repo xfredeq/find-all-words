@@ -126,6 +126,7 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
+
         System.out.println("List of nicks updater started0");
         this.timer.setVisible(false);
 
@@ -142,19 +143,26 @@ public class VoteView extends MyView implements ActionListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+        String response = null;
+        if (!selfLeave) {
+            response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+        }
         if (response == null) {
             this.shutdownAll();
             ConnectionHandler.endConnection();
             this.cardLayout.show(this.cardPane, "StartView");
         }
 
-        if (!selfLeave) {
-            response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
-        }
+
 
         this.shutdownAll();
         super.returnToPreviousView(cardLayout, cardPane);
+    }
+
+    @Override
+    public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
+        this.shutdownAll();
+        return super.moveToNextView(cardLayout, cardPane);
     }
 
     @Override
@@ -183,36 +191,39 @@ public class VoteView extends MyView implements ActionListener {
     private class UpdateLeave extends SwingWorker<Void, String> {
         @Override
         protected Void doInBackground() {
-            while (!isCancelled()) {
 
                 try {
-                    publish(ConnectionHandler.responseTable.get("gameNotification").messages.poll(100, TimeUnit.SECONDS));
+                    publish(ConnectionHandler.responseTable.get("countdownLeave")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
+                    System.out.println("interrupted");
+                    return null;
                 }
 
-            }
             return null;
         }
 
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
+            if (response == null)
+            {
+                return;
+            }
             List<String> split;
             split = new ArrayList<>(List.of(response.split("_")));
             System.out.println(split);
-            if (response.matches("NOTIFICATION_GAME_VICTORY_.*")) {
+            if (response.matches("NOTIFICATION_COUNTDOWN_LEAVE")) {
                 selfLeave = true;
                 JOptionPane.showMessageDialog(
                         null,
-                        "You won!.\n\n",
+                        "Endgame!.\n\n",
                         "Enemies have left the game.\n\n",
                         JOptionPane.INFORMATION_MESSAGE
                 );
                 returnToPreviousView(cardLayout, cardPane);
             }
         }
-
-
     }
 
     private class UpdateTimer extends SwingWorker<Void, String> {
@@ -221,12 +232,14 @@ public class VoteView extends MyView implements ActionListener {
         protected Void doInBackground() {
             while (!isCancelled()) {
                 try {
-                    publish(ConnectionHandler.responseTable.get("timerStart").messages.poll(100, TimeUnit.SECONDS));
+                    publish(ConnectionHandler.responseTable.get("timerStart")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
                 }
 
                 try {
-                    publish(ConnectionHandler.responseTable.get("gameStart").messages.poll(100, TimeUnit.SECONDS));
+                    publish(ConnectionHandler.responseTable.get("gameStart")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
                 }
             }
@@ -277,7 +290,8 @@ public class VoteView extends MyView implements ActionListener {
             ConnectionHandler.responseTable.get("playersVotes").messages.clear();
             while (!isCancelled()) {
                 try {
-                    publish(ConnectionHandler.responseTable.get("playersVotes").messages.poll(100, TimeUnit.SECONDS));
+                    publish(ConnectionHandler.responseTable.get("playersVotes")
+                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException ignored) {
                 }
             }

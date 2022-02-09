@@ -12,16 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class GameView extends MyView implements ActionListener {
     private final GridBagConstraints c;
     private final ArrayList<Character> lettersList = new ArrayList<>(List.of(
-            'w', 'a', 'o', 'r', 'd', ' ',
-            'o', 'a', 'p', 'r', 'd', 'w',
-            'r', 'a', ' ', ' ', ' ', ' ',
-            'd', 'a', ' ', ' ', ' ', ' ',
-            'w', ' ', ' ', ' ', ' ', ' ',
-            'a', ' ', ' ', ' ', ' ', ' '));
+            ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' ', ' ', ' ',
+            ' ', ' ', ' ', ' ', ' ', ' '));
     private CardLayout cardLayout;
     private JPanel cardPane;
     private boolean gameFinished;
@@ -84,7 +85,6 @@ public class GameView extends MyView implements ActionListener {
 
 
                 this.letters.revalidate();
-
                 this.lettersTable.add(new JScrollPane(this.letters), BorderLayout.CENTER);
             }
 
@@ -263,8 +263,6 @@ public class GameView extends MyView implements ActionListener {
 
         this.playersPanel.add(this.playersTitle);
 
-        addLetters();
-
 
         this.c.fill = GridBagConstraints.BOTH;
         this.c.gridheight = 2;
@@ -332,8 +330,17 @@ public class GameView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
+        this.gameFinished = false;
+
+        this.addLetters();
+
+        this.enterTextField.setText("");
+        this.enterTextField.requestFocus();
+
         this.updateData = new UpdateData();
         this.updateData.execute();
+
+
         System.out.println("Game data updated");
     }
 
@@ -365,15 +372,17 @@ public class GameView extends MyView implements ActionListener {
                         //System.out.println(this.lettersList);
                     }
                     enterTextField.setText("");
+                    this.enterTextField.requestFocus();
                     letters.removeAll();
                     lettersTable.removeAll();
                     addLetters();
                     System.out.println("word proper");
-                    //wordsPanel.revalidate();
+                    wordsPanel.revalidate();
                 } else if (response.matches("RESPONSE_CHECK_WORD_FAILURE_[0-9]+")) {
 
                     System.out.println("word not proper");
                     lettersPanel.revalidate();
+                    this.enterTextField.requestFocus();
                 }
             } else {
                 JOptionPane.showMessageDialog(
@@ -382,6 +391,7 @@ public class GameView extends MyView implements ActionListener {
                         "ACHTUNG!",
                         JOptionPane.WARNING_MESSAGE);
                 System.out.println("Wrong word");
+                this.enterTextField.requestFocus();
             }
         }
     }
@@ -434,11 +444,10 @@ public class GameView extends MyView implements ActionListener {
             publish(ConnectionHandler.sendRequest("GAME_PLAYERS_@", "gameNotification"));
             while (!isCancelled()) {
 
-
-                while (ConnectionHandler.responseTable.get("gameNotification").messages.peek() != null) {
-                    System.out.println(ConnectionHandler.responseTable.get("gameNotification").messages.peek());
-                    publish(ConnectionHandler.responseTable.get("gameNotification").messages.poll());
-
+                try {
+                    publish(ConnectionHandler.responseTable.get("gameNotification")
+                            .messages.poll(10, TimeUnit.SECONDS));
+                } catch (InterruptedException ignored) {
                 }
             }
             return null;
@@ -448,14 +457,19 @@ public class GameView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             for (var chunk : chunks) {
-
-                System.out.println(chunk);
+                if (chunk == null){
+                    System.out.println("null");
+                    return;
+                }
+                System.out.println("chunk: " + chunk);
                 List<String> split;
                 split = new ArrayList<>(List.of(chunk.split("_")));
                 if ("LETTER".equals(split.get(2))) {
                     if (lettersList.contains(' ')) {
                         for (int i = 0; i < lettersList.size(); i++) {
+                            System.out.println("for");
                             if (lettersList.get(i).equals(' ')) {
+                                System.out.println("if");
                                 letters.removeAll();
                                 lettersTable.removeAll();
                                 addLetters();
@@ -506,7 +520,11 @@ public class GameView extends MyView implements ActionListener {
                     }
                     if (gameFinished) {
                         new Scoreboard(treeMap);
-                        returnToPreviousView(cardLayout, cardPane);
+                        String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+                        if (response == null){
+                            System.out.println("null response");
+                        }
+                        fakeButton.doClick();
                     }
 
                     playersPanel.revalidate();
@@ -545,7 +563,7 @@ public class GameView extends MyView implements ActionListener {
                     }
 
                 } else if ("VICTORY".equals(split.get(2))) {
-                    fakeButton.doClick();
+
                     if ("LEFT".equals(split.get(4))) {
                         JOptionPane.showMessageDialog(
                                 null,
@@ -559,11 +577,12 @@ public class GameView extends MyView implements ActionListener {
                         JOptionPane.showMessageDialog(
                                 null,
                                 "You won the game!\n" +
-                                        "Your total score is " + split.get(6),
+                                        "Your total score is " + split.get(6) +
+                                "\nEnemies have left the game",
                                 "Game won.",
                                 JOptionPane.INFORMATION_MESSAGE
                         );
-                        moveToNextView(cardLayout, cardPane);
+                        fakeButton.doClick();
 
                     }
                 } else if ("FINISHED".equals(split.get(2))) {
