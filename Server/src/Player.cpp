@@ -218,6 +218,7 @@ void Player::processRequests(int fd, char *buffer, int length)
     strcpy(subType, request.substr(0, index).c_str());
     request = request.substr(index + 1);
 
+    cout << this->inGame << " " << this->inLobby << endl;
     if (!this->inGame) // PLAYER OUT OF GAME
     {
         if (!this->inLobby) // PLAYER OUT OF LOBBY
@@ -330,6 +331,11 @@ void Player::processRequests(int fd, char *buffer, int length)
                         this->write((char *)response.c_str(), response.length());
                     }
                 }
+                else
+                {
+                    string response = "RESPONSE_BAD_REQUEST\n";
+                    this->write((char *)response.c_str(), response.length());
+                }
             }
             else
             {
@@ -360,6 +366,7 @@ void Player::processRequests(int fd, char *buffer, int length)
                     if (this->lobby->checkGameStart())
                     {
                         cout << "GAME STARTS" << endl;
+                        this->notifyAllWaiting();
                         this->lobby->startCountdownThread();
                     }
                 }
@@ -367,6 +374,7 @@ void Player::processRequests(int fd, char *buffer, int length)
                 {
                     string response = "NOTIFICATION_" + constructLobbyMessage(this->lobby);
                     this->write((char *)response.c_str(), response.length());
+                    cout << "LOBBY PLAYERS!!!" << endl;
                 }
 
                 else
@@ -427,6 +435,11 @@ void Player::processRequests(int fd, char *buffer, int length)
 
                 this->write((char *)response.c_str(), response.length());
             }
+        }
+        else
+        {
+            string response = "RESPONSE_BAD_REQUEST\n";
+            this->write((char *)response.c_str(), response.length());
         }
     }
 

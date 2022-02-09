@@ -4,7 +4,7 @@ int lobbySize;
 int lobbyNumber;
 
 int roundsNumber = 3;
-int roundDuration = 180;
+int roundDuration = 30;
 int wordInterval = 3;
 
 int serverSocket;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 {
     cout << "MAIN: " << this_thread::get_id() << endl;
 
-    if (argc < 3)
+    if (argc < 5)
         error(1, 0, "Need 4 arg (address, port, lobby size, roundsNumber)");
 
     auto port = readArgument(argv[2], false);
