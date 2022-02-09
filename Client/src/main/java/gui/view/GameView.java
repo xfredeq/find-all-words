@@ -343,8 +343,6 @@ public class GameView extends MyView implements ActionListener {
         this.updateData = new UpdateData();
         this.updateData.execute();
 
-
-        System.out.println("Game data updated");
     }
 
     @Override
@@ -370,21 +368,18 @@ public class GameView extends MyView implements ActionListener {
                 } else if (response.matches("RESPONSE_CHECK_WORD_SUCCESS_[0-9]+")) {
 
                     for (int i = 0; i < enterTextField.getText().length(); i++) {
-                        //System.out.println("letter removed" + enterTextField.getText().charAt(i));
+                        //("letter removed" + enterTextField.getText().charAt(i));
                         this.lettersList.remove((Character) enterTextField.getText().charAt(i));
                         this.lettersList.add(' ');
-                        //System.out.println(this.lettersList);
+                        //(this.lettersList);
                     }
                     enterTextField.setText("");
                     this.enterTextField.requestFocus();
                     letters.removeAll();
                     lettersTable.removeAll();
                     addLetters();
-                    System.out.println("word proper");
                     wordsPanel.revalidate();
                 } else if (response.matches("RESPONSE_CHECK_WORD_FAILURE_[0-9]+")) {
-
-                    System.out.println("word not proper");
                     lettersPanel.revalidate();
                     this.enterTextField.requestFocus();
                 }
@@ -394,7 +389,6 @@ public class GameView extends MyView implements ActionListener {
                         "Wrong word! Not enough letters.",
                         "ACHTUNG!",
                         JOptionPane.WARNING_MESSAGE);
-                System.out.println("Wrong word");
                 this.enterTextField.requestFocus();
             }
         }
@@ -464,15 +458,12 @@ public class GameView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             for (var chunk : chunks) {
-                System.out.println("chunk: " + chunk);
                 List<String> split;
                 split = new ArrayList<>(List.of(chunk.split("_")));
                 if ("LETTER".equals(split.get(2))) {
                     if (lettersList.contains(' ')) {
                         for (int i = 0; i < lettersList.size(); i++) {
-                            System.out.println("for");
                             if (lettersList.get(i).equals(' ')) {
-                                System.out.println("if");
                                 letters.removeAll();
                                 lettersTable.removeAll();
                                 addLetters();
@@ -510,8 +501,6 @@ public class GameView extends MyView implements ActionListener {
                         String nick = split.get(4 + i * 2);
                         String score = split.get(5 + i * 2);
                         treeMap.put(nick, Integer.parseInt(score));
-                        System.out.println(treeMap);
-
                     }
 
                     for (Map.Entry<String, Integer> string : ComparePoints.entriesSortedByValues(treeMap)) {
@@ -569,12 +558,9 @@ public class GameView extends MyView implements ActionListener {
                                 "Game Victory",
                                 JOptionPane.INFORMATION_MESSAGE
                         );
-
-
                     }
                 } else if ("FINISHED".equals(split.get(2))) {
                     gameFinished = true;
-
                 } else {
                     shutdownAll();
                     ConnectionHandler.endConnection();

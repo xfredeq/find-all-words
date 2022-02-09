@@ -1,5 +1,7 @@
 package gui.view;
 
+import gui.helpers.ComparePoints;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -7,7 +9,7 @@ import java.util.Map;
 public class Scoreboard {
 
 
-    private JDialog dialog;
+    private final JDialog dialog;
     private JLabel title;
     private JLabel desc;
     private JButton cancel;

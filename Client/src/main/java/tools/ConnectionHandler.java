@@ -66,7 +66,7 @@ public class ConnectionHandler {
             socket.close();
 
         } catch (Exception e) {
-            // e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -93,7 +93,6 @@ public class ConnectionHandler {
 
         @Override
         protected Void doInBackground() {
-            System.out.println("reader started");
             while (!isCancelled()) {
                 try {
                     String message = in.readLine();

@@ -16,7 +16,6 @@ public class PropertiesHandler {
             stream.write(Objects.requireNonNull(PropertiesHandler.class.getClassLoader()
                     .getResourceAsStream("config.properties")).readAllBytes());
             stream.close();
-            System.out.println(file.getAbsolutePath());
             configProperties.load(new FileInputStream(file));
         } catch (IOException e) {
             System.err.println("No properties File");

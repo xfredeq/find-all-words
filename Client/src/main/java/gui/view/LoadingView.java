@@ -83,11 +83,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     @Override
     public void onShowAction() {
         this.enter.setVisible(false);
-        System.out.println("on show start");
         semaphore = new Semaphore(0);
         semaphore2 = new Semaphore(0);
 
-        System.out.println("inside");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         this.connectionTask = new ConnectionTask();
@@ -111,7 +109,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         this.progressBar.setValue(0);
         this.enter.setVisible(false);
 
-        System.out.println("returning");
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -151,7 +148,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 } else if (i == 3) {
                     String response = ConnectionHandler.sendRequest(
                             "GET_LOBBYSIZE_@", "lobbySize");
-                    System.out.println(response);
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
@@ -184,10 +180,8 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         enter.setVisible(true);
                         PropertiesHandler.setProperty("nickname", split[split.length - 1]);
                         PropertiesHandler.saveProperties();
-                        System.out.println(response);
                     } else {
                         enter.setVisible(false);
-                        System.out.println("NOT UNIQUE NICK");
                         JOptionPane.showMessageDialog(
                                 JOptionPane.getFrameForComponent(null),
                                 "Your nick is already used!",
@@ -210,9 +204,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             }
 
-            System.out.println(ConnectionHandler.address);
-            System.out.println(ConnectionHandler.port);
-
             try {
                 if (progressThread.isAlive()) {
                     progressThread.join();
@@ -222,15 +213,12 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                 return null;
 
             }
-            System.out.println("return swingworker");
             return null;
         }
 
         @Override
         public void done() {
-            System.out.println("in done");
             setCursor(null);
-            System.out.println("done " + connectionTask.getProgress());
             if (connectionTask.getProgress() == 100) {
 
                 Toolkit.getDefaultToolkit().beep();
@@ -251,7 +239,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         try {
                             Thread.sleep(40);
                         } catch (InterruptedException e) {
-                            System.out.println("2 " + Thread.currentThread().getName());
                             return;
                         }
                         connectionTask.setProgress(progress);
@@ -261,11 +248,9 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         semaphore.acquire();
 
                     } catch (InterruptedException e) {
-                        System.out.println("1 " + Thread.currentThread().getName());
                         return;
                     }
                 }
-                System.out.println("counter end");
             }
 
         }

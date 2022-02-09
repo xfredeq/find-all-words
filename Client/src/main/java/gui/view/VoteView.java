@@ -16,8 +16,8 @@ public class VoteView extends MyView implements ActionListener {
 
     private boolean selfLeave = false;
 
-    private CardLayout cardLayout;
-    private JPanel cardPane;
+    private final CardLayout cardLayout;
+    private final JPanel cardPane;
 
     private JLabel title;
     private JPanel buttonPanel;
@@ -128,7 +128,6 @@ public class VoteView extends MyView implements ActionListener {
     @Override
     public void onShowAction() {
         this.selfLeave = false;
-        System.out.println("List of nicks updater started0");
         this.timerLabel.setText("Waiting for players...");
         this.timer.setVisible(false);
 
@@ -138,7 +137,6 @@ public class VoteView extends MyView implements ActionListener {
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
         updateLeave = new UpdateLeave();
-        System.out.println("List of nicks updater started");
     }
 
 
@@ -181,7 +179,6 @@ public class VoteView extends MyView implements ActionListener {
                 ConnectionHandler.endConnection();
                 this.cardLayout.show(this.cardPane, "StartView");
             }
-            System.out.println("voted");
         }
     }
 
@@ -192,8 +189,7 @@ public class VoteView extends MyView implements ActionListener {
                 publish(ConnectionHandler.responseTable.get("countdownLeave")
                         .messages.poll(10 + ConnectionHandler.requestTimeout, TimeUnit.SECONDS));
             } catch (InterruptedException e) {
-                //e.printStackTrace();
-                System.out.println("update leave interrupted");
+                e.printStackTrace();
             }
             return null;
         }
@@ -202,9 +198,6 @@ public class VoteView extends MyView implements ActionListener {
         protected void process(List<String> chunks) {
             String message = chunks.get(chunks.size() - 1);
             if (message != null) {
-                List<String> split;
-                split = new ArrayList<>(List.of(message.split("_")));
-                System.out.println(split);
                 if (message.matches("NOTIFICATION_COUNTDOWN_LEAVE")) {
                     updateTimer.cancel(true);
                     selfLeave = true;
@@ -216,7 +209,9 @@ public class VoteView extends MyView implements ActionListener {
                     );
                     String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
                     if (response == null) {
-                        System.out.println("null response");
+                        shutdownAll();
+                        ConnectionHandler.endConnection();
+                        cardLayout.show(cardPane, "StartView");
                     }
                     cancel.doClick();
                 }
@@ -232,7 +227,7 @@ public class VoteView extends MyView implements ActionListener {
                 publish(ConnectionHandler.responseTable.get("timerStart")
                         .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.DAYS));
             } catch (InterruptedException e) {
-                //e.printStackTrace();
+                e.printStackTrace();
                 return null;
             }
 
@@ -241,7 +236,7 @@ public class VoteView extends MyView implements ActionListener {
                         .messages.poll(10 + ConnectionHandler.requestTimeout, TimeUnit.SECONDS);
                 publish(response != null ? response : "NOTIFICATION_START_TIMEOUT");
             } catch (InterruptedException e) {
-                //e.printStackTrace();
+                e.printStackTrace();
                 return null;
             }
             return null;
@@ -253,12 +248,10 @@ public class VoteView extends MyView implements ActionListener {
             if (response != null) {
                 List<String> split;
                 split = new ArrayList<>(List.of(response.split("_")));
-                System.out.println(split);
                 if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
 
                     updateLeave.execute();
 
-                    //timer = new GameTimer();
                     timer.setTime(Integer.parseInt(split.get(3)) * 1000);
                     timer.start();
                     vote.setEnabled(false);
@@ -287,7 +280,6 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected Void doInBackground() {
             String response = ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes");
-            System.out.println("RESP: " + response);
             if (response == null) {
                 shutdownAll();
                 ConnectionHandler.endConnection();

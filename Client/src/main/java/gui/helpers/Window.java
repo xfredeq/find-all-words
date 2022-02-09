@@ -24,10 +24,7 @@ public class Window extends JFrame implements ActionListener {
     private int windowHeight;
 
     public Window() {
-
-
         super("FindAllWords");
-        System.out.println("window " + Thread.currentThread().getName());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setWindowWidth(1024);
         this.setWindowHeight(720);
@@ -160,11 +157,8 @@ public class Window extends JFrame implements ActionListener {
                         break;
                     }
                 }
-                System.out.println("moooveee");
                 if (view.moveToNextView(this.cardLayout, this.cardPane)) {
-                    System.out.println("action");
                     nextView.onShowAction();
-                    System.out.println("after action");
                 }
             } else if (view.getSecondaryNextViewButton() != null && source == view.getSecondaryNextViewButton()) {
                 for (var v : this.views) {

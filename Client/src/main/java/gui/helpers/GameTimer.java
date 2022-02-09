@@ -5,14 +5,6 @@ import java.awt.*;
 
 public class GameTimer extends JPanel {
 
-    public void setTime(int time) {
-        this.time = time;
-    }
-
-    public void setCurrentTime(JLabel currentTime) {
-        this.currentTime = currentTime;
-    }
-
     private int time = 0;
     private JLabel currentTime = new JLabel("--:--");
     private final Timer timer = new Timer(1000, e -> {
@@ -33,6 +25,13 @@ public class GameTimer extends JPanel {
         add(currentTime);
     }
 
+    public void setTime(int time) {
+        this.time = time;
+    }
+
+    public void setCurrentTime(JLabel currentTime) {
+        this.currentTime = currentTime;
+    }
 
     public void start() {
         timer.start();

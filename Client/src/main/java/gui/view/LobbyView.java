@@ -8,8 +8,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class LobbyView extends MyView implements ActionListener {
@@ -116,7 +118,6 @@ public class LobbyView extends MyView implements ActionListener {
 
         this.updater = new UpdateLobbyInfo();
         this.updater.execute();
-        System.out.println("updater started");
     }
 
     @Override
@@ -138,11 +139,9 @@ public class LobbyView extends MyView implements ActionListener {
         }
 
         String[] split = response.split("_");
-        System.out.println(Arrays.toString(split));
         if ("SUCCESS".equals(split[split.length - 2])) {
             return super.moveToNextView(cardLayout, cardPane);
         } else {
-            System.out.println("LOBBY JOIN FAILURE");
             return false;
         }
 
@@ -173,20 +172,14 @@ public class LobbyView extends MyView implements ActionListener {
             this.updater.cancel(true);
             String response = ConnectionHandler.sendRequest(
                     "LOBBY_CREATE_@", "lobbyCreate");
-            System.out.println("CREATE RESPONSE: " + response);
             if (response == null) {
                 returnToPreviousView(cardLayout, cardPane);
             } else {
                 String[] split = response.split("_");
-                System.out.println(Arrays.toString(split));
                 if ("SUCCESS".equals(split[split.length - 2])) {
                     cardLayout.show(cardPane, this.nextViewName);
-                } else {
-                    System.out.println("LOBBY CREATE FAILURE");
                 }
             }
-
-
         }
     }
 
@@ -203,8 +196,7 @@ public class LobbyView extends MyView implements ActionListener {
                     publish(ConnectionHandler.responseTable.get("lobbies")
                             .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.SECONDS));
                 } catch (InterruptedException e) {
-                    //e.printStackTrace();
-                    System.out.println("interrupt lobby");
+                    e.printStackTrace();
                     return null;
                 }
             }
@@ -215,7 +207,6 @@ public class LobbyView extends MyView implements ActionListener {
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
             if (response != null) {
-                System.out.println("lobbies message: " + response);
                 List<String> split;
                 split = new ArrayList<>(List.of(response.split("_")));
                 int count = Integer.parseInt(split.get(3));

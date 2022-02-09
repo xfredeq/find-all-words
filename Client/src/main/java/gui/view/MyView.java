@@ -54,8 +54,7 @@ public abstract class MyView extends JPanel {
 
     }
 
-    protected void shutdownAll()
-    {
+    protected void shutdownAll() {
 
     }
 
