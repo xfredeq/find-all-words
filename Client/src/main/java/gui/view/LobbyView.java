@@ -203,8 +203,9 @@ public class LobbyView extends MyView implements ActionListener {
                     publish(ConnectionHandler.responseTable.get("lobbies")
                             .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     System.out.println("interrupt lobby");
+                    return null;
                 }
             }
             return null;
@@ -213,32 +214,27 @@ public class LobbyView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
-            if (response == null)
-            {
-                System.out.println("update lobby null response");
-                returnToPreviousView(cardLayout, cardPane);
-                return;
-            }
-            System.out.println("lobbies message: " + response);
-            List<String> split;
-            split = new ArrayList<>(List.of(response.split("_")));
-            int count = Integer.parseInt(split.get(3));
-            lobbies.clear();
-            lobbyPanel.removeAll();
-            lobbyPanel.revalidate();
-            validate();
-            for (int i = 0; i < count; i++) {
-                String number = split.get(5 + 4 * i);
-                String players = split.get(7 + 4 * i);
+            if (response != null) {
+                System.out.println("lobbies message: " + response);
+                List<String> split;
+                split = new ArrayList<>(List.of(response.split("_")));
+                int count = Integer.parseInt(split.get(3));
+                lobbies.clear();
+                lobbyPanel.removeAll();
+                lobbyPanel.revalidate();
+                validate();
+                for (int i = 0; i < count; i++) {
+                    String number = split.get(5 + 4 * i);
+                    String players = split.get(7 + 4 * i);
 
-                Lobby l = new Lobby(number, players);
-                lobbies.put(number, l);
-                l.getSelect().addActionListener(listener);
-                lobbyPanel.add(l);
+                    Lobby l = new Lobby(number, players);
+                    lobbies.put(number, l);
+                    l.getSelect().addActionListener(listener);
+                    lobbyPanel.add(l);
+                }
+                lobbyPanel.revalidate();
+                validate();
             }
-            lobbyPanel.revalidate();
-            validate();
-
         }
     }
 }

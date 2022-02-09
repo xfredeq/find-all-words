@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ConnectionHandler {
     public static int timeoutTime = 10;
+    public static int requestTimeout = 3;
     public static int port = 1313;
     public static String address = "localhost";
     public static Socket socket;
@@ -25,7 +26,6 @@ public class ConnectionHandler {
     public static boolean createSocket() {
         try {
             socket = new Socket(address, port);
-            //socket.setSoTimeout(5_000);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             messageGetter = new MessageGetter();
@@ -82,7 +82,7 @@ public class ConnectionHandler {
         out.print(request);
         out.flush();
         try {
-            return ConnectionHandler.responseTable.get(type).messages.poll(2, TimeUnit.SECONDS);
+            return ConnectionHandler.responseTable.get(type).messages.poll(requestTimeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

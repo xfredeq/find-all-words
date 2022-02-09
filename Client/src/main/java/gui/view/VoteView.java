@@ -137,8 +137,6 @@ public class VoteView extends MyView implements ActionListener {
         this.updatePlayersList.execute();
         this.updateTimer = new UpdateTimer();
         this.updateTimer.execute();
-        this.updateLeave = new UpdateLeave();
-        this.updateLeave.execute();
         System.out.println("List of nicks updater started");
     }
 
@@ -184,48 +182,43 @@ public class VoteView extends MyView implements ActionListener {
             }
             System.out.println("voted");
         }
-
     }
 
     private class UpdateLeave extends SwingWorker<Void, String> {
         @Override
         protected Void doInBackground() {
-
             try {
                 publish(ConnectionHandler.responseTable.get("countdownLeave")
-                        .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
+                        .messages.poll(10 + ConnectionHandler.requestTimeout, TimeUnit.SECONDS));
             } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.out.println("vote interrupted");
+                //e.printStackTrace();
+                System.out.println("update leave interrupted");
             }
-
             return null;
         }
 
         @Override
         protected void process(List<String> chunks) {
             String message = chunks.get(chunks.size() - 1);
-            if (message == null) {
-                System.out.println("vote view leave update null process");
-
-                return;
-            }
-            List<String> split;
-            split = new ArrayList<>(List.of(message.split("_")));
-            System.out.println(split);
-            if (message.matches("NOTIFICATION_COUNTDOWN_LEAVE")) {
-                selfLeave = true;
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Endgame!.\n\n",
-                        "Enemies have left the game.\n\n",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
-                if (response == null) {
-                    System.out.println("null response");
+            if (message != null) {
+                List<String> split;
+                split = new ArrayList<>(List.of(message.split("_")));
+                System.out.println(split);
+                if (message.matches("NOTIFICATION_COUNTDOWN_LEAVE")) {
+                    updateTimer.cancel(true);
+                    selfLeave = true;
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Enemies have left the game.\n",
+                            "Game has ended",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    String response = ConnectionHandler.sendRequest("LOBBY_LEAVE_@", "lobbyLeave");
+                    if (response == null) {
+                        System.out.println("null response");
+                    }
+                    cancel.doClick();
                 }
-                cancel.doClick();
             }
         }
     }
@@ -234,20 +227,21 @@ public class VoteView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            while (!isCancelled()) {
-                try {
-                    publish(ConnectionHandler.responseTable.get("timerStart")
-                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                publish(ConnectionHandler.responseTable.get("timerStart")
+                        .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.DAYS));
+            } catch (InterruptedException e) {
+                //e.printStackTrace();
+                return null;
+            }
 
-                try {
-                    publish(ConnectionHandler.responseTable.get("gameStart")
-                            .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                String response = ConnectionHandler.responseTable.get("gameStart")
+                        .messages.poll(10 + ConnectionHandler.requestTimeout, TimeUnit.SECONDS);
+                publish(response != null ? response : "NOTIFICATION_GAME_START_TIMEOUT");
+            } catch (InterruptedException e) {
+                //e.printStackTrace();
+                return null;
             }
             return null;
         }
@@ -255,37 +249,36 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
-            if (response == null) {
-                System.out.println("vote view timer null process");
-                shutdownAll();
-                ConnectionHandler.endConnection();
-                cardLayout.show(cardPane, "StartView");
-                return;
-            }
-            List<String> split;
-            split = new ArrayList<>(List.of(response.split("_")));
-            System.out.println(split);
-            if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
-                timer = new GameTimer();
-                timer.setTime(Integer.parseInt(split.get(3)) * 1000);
-                timer.start();
-                vote.setEnabled(false);
-                timerLabel.setText("Game starts in...");
+            if (response != null) {
+                List<String> split;
+                split = new ArrayList<>(List.of(response.split("_")));
+                System.out.println(split);
+                if (response.matches("NOTIFICATION_START_COUNTDOWN_[0-9]+")) {
+                    updateLeave = new UpdateLeave();
+                    updateLeave.execute();
 
-                timer.setVisible(true);
-            }
-            if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
-                timer.stop();
-                timer.setTime(Integer.parseInt(PropertiesHandler.getProperty("game_duration")));
-                timer.setCurrentTime(new JLabel(""));
-                PropertiesHandler.setProperty("game_duration", split.get(3));
-                PropertiesHandler.saveProperties();
-                nextViewFakeButton.doClick();
-            }
+                    timer = new GameTimer();
+                    timer.setTime(Integer.parseInt(split.get(3)) * 1000);
+                    timer.start();
+                    vote.setEnabled(false);
+                    timerLabel.setText("Game starts in...");
 
+                    timer.setVisible(true);
+                } else if (response.matches("NOTIFICATION_START_GAME_[0-9]+")) {
+                    timer.stop();
+                    timer.setTime(Integer.parseInt(PropertiesHandler.getProperty("game_duration")));
+                    timer.setCurrentTime(new JLabel(""));
+                    PropertiesHandler.setProperty("game_duration", split.get(3));
+                    PropertiesHandler.saveProperties();
+                    nextViewFakeButton.doClick();
+                } else {
+                    shutdownAll();
+                    ConnectionHandler.endConnection();
+                    cardLayout.show(cardPane, "StartView");
+                }
+            }
 
         }
-
     }
 
     private class UpdatePlayersList extends SwingWorker<Void, String> {
@@ -294,6 +287,12 @@ public class VoteView extends MyView implements ActionListener {
         protected Void doInBackground() {
             String response = ConnectionHandler.sendRequest("LOBBY_PLAYERS_@", "playersVotes");
             System.out.println("RESP: " + response);
+            if (response == null) {
+                shutdownAll();
+                ConnectionHandler.endConnection();
+                cardLayout.show(cardPane, "StartView");
+            }
+
             publish(response);
             ConnectionHandler.responseTable.get("playersVotes").messages.clear();
             while (!isCancelled()) {
@@ -301,7 +300,8 @@ public class VoteView extends MyView implements ActionListener {
                     publish(ConnectionHandler.responseTable.get("playersVotes")
                             .messages.poll(ConnectionHandler.timeoutTime, TimeUnit.SECONDS));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
+                    return null;
                 }
             }
             return null;
@@ -311,38 +311,32 @@ public class VoteView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
-            if (response == null) {
-                System.out.println("vote view player list null process");
+            if (response != null) {
+                List<String> split;
+                playersPanel.removeAll();
+                playersPanel.revalidate();
+                playersPanel.repaint();
+                validate();
+                split = new ArrayList<>(List.of(response.split("_")));
+                int count = Integer.parseInt(split.get(3));
+                for (int i = 0; i < count; i++) {
+                    String nick = split.get(4 + i * 2);
+                    String vote = split.get(5 + i * 2);
+                    JLabel l = new JLabel(nick, SwingConstants.CENTER);
+                    if ("1".equals(vote)) {
+                        l.setBackground(Color.GREEN);
+                    } else {
+                        l.setBackground(Color.RED);
+                    }
 
-                shutdownAll();
-                ConnectionHandler.endConnection();
-                cardLayout.show(cardPane, "StartView");
-                return;
-            }
-            List<String> split;
-            playersPanel.removeAll();
-            playersPanel.revalidate();
-            playersPanel.repaint();
-            validate();
-            split = new ArrayList<>(List.of(response.split("_")));
-            int count = Integer.parseInt(split.get(3));
-            for (int i = 0; i < count; i++) {
-                String nick = split.get(4 + i * 2);
-                String vote = split.get(5 + i * 2);
-                JLabel l = new JLabel(nick, SwingConstants.CENTER);
-                if ("1".equals(vote)) {
-                    l.setBackground(Color.GREEN);
-                } else {
-                    l.setBackground(Color.RED);
+                    l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    l.setOpaque(true);
+                    playersPanel.add(l);
+
                 }
-
-                l.setAlignmentX(Component.CENTER_ALIGNMENT);
-                l.setOpaque(true);
-                playersPanel.add(l);
-
+                playersPanel.revalidate();
+                validate();
             }
-            playersPanel.revalidate();
-            validate();
         }
     }
 
