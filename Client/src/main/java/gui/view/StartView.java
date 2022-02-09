@@ -1,8 +1,7 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
-import put.poznan.tools.Tools;
+import tools.PropertiesHandler;
+import tools.Tools;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +15,12 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     private JLabel title;
 
     private JLabel nicknameLabel;
+    private JLabel nicknameTaken;
     private JTextField nickname;
 
     private JButton connect;
     private JButton exit;
+
 
     public StartView() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -31,7 +32,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     private void setComponents() {
         this.viewName = "StartView";
         this.nextViewName = "LoadingView";
-        this.title = new JLabel("Find all Words!");
+        this.title = new JLabel("Find all words!");
 
 
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -39,6 +40,12 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.RED);
         title.setOpaque(true);
+
+        this.nicknameTaken = new JLabel("This nick is already used!");
+        this.nicknameTaken.setVisible(false);
+        this.nicknameTaken.setFont(new Font("Arial", Font.BOLD, 20));
+        this.nicknameTaken.setForeground(Color.RED);
+
 
         this.nicknameLabel = new JLabel("nickname:");
         this.nicknameLabel.setForeground(Color.BLACK);
@@ -48,11 +55,12 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         this.nickname = new JTextField();
         this.nickname.setForeground(Color.BLACK);
         this.nickname.setFont(new Font("Arial", Font.ITALIC, 20));
-        this.nickname.setMaximumSize(new Dimension(200,40));
+        this.nickname.setMaximumSize(new Dimension(200, 40));
         this.nickname.addFocusListener(this);
 
         this.connect = Tools.createButton("Connect to server", Color.BLUE);
         this.connect.addActionListener(this);
+        this.connect.setActionCommand("Connect");
         this.nextViewButton = this.connect;
 
         this.exit = Tools.createButton("Exit", Color.RED);
@@ -96,6 +104,7 @@ public class StartView extends MyView implements ActionListener, FocusListener {
         if (source == this.exit) {
             System.exit(0);
         }
+
     }
 
     @Override
@@ -115,4 +124,5 @@ public class StartView extends MyView implements ActionListener, FocusListener {
     public void focusLost(FocusEvent e) {
 
     }
+
 }

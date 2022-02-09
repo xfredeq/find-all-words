@@ -1,8 +1,7 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +9,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.Semaphore;
 
-import static put.poznan.networking.ConnectionHandler.address;
+
 
 public class LoadingView extends MyView implements PropertyChangeListener {
 
@@ -27,7 +26,7 @@ public class LoadingView extends MyView implements PropertyChangeListener {
     private Semaphore semaphore = new Semaphore(0);
     private Semaphore semaphore2 = new Semaphore(0);
 
-    LoadingView(CardLayout layout, JPanel pane) {
+    public LoadingView(CardLayout layout, JPanel pane) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.cardLayout = layout;
         this.cardPane = pane;
@@ -83,12 +82,10 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void onShowAction() {
-        System.out.println("on show start");
+        this.enter.setVisible(false);
         semaphore = new Semaphore(0);
         semaphore2 = new Semaphore(0);
 
-        System.out.println("inside");
-        //#TODO get lobby size from server
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         this.connectionTask = new ConnectionTask();
@@ -105,14 +102,13 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
     @Override
     public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        //#TODO break connection
+        ConnectionHandler.endConnection();
         this.progressThread.interrupt();
         this.connectionTask.cancel(true);
         this.connectionTask.removePropertyChangeListener(this);
         this.progressBar.setValue(0);
         this.enter.setVisible(false);
-        ConnectionHandler.endConnection();
-        System.out.println("returning");
+
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
@@ -137,15 +133,21 @@ public class LoadingView extends MyView implements PropertyChangeListener {
             for (int i = 0; i < 5; i++) {
                 if (i == 0) {
                     ConnectionHandler.address = PropertiesHandler.getProperty("serverAddress");
-                } else if (i == 1) {
                     ConnectionHandler.port = Integer.parseInt(PropertiesHandler.getProperty("serverPort"));
+                    ConnectionHandler.requestTimeout = Integer.parseInt(PropertiesHandler.getProperty("requestTimeout"));
+                    ConnectionHandler.generalTimeout = Integer.parseInt(PropertiesHandler.getProperty("generalTimeout"));
+
+                } else if (i == 1) {
+                    ConnectionHandler.initializeTable();
                 } else if (i == 2) {
                     if (!ConnectionHandler.createSocket()) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
+                    ConnectionHandler.readMessages();
                 } else if (i == 3) {
-                    String response = ConnectionHandler.sendRequest("GET_LOBBYSIZE_@");
+                    String response = ConnectionHandler.sendRequest(
+                            "GET_LOBBYSIZE_@", "lobbySize");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
@@ -153,17 +155,45 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                     String[] split = response.split("_");
                     PropertiesHandler.setProperty("lobbySize", split[split.length - 1]);
                     PropertiesHandler.saveProperties();
+
+                    String responseRounds = ConnectionHandler.sendRequest(
+                            "GET_ROUNDS_@", "roundsNumber"
+                    );
+                    if (responseRounds == null) {
+                        returnToPreviousView(cardLayout, cardPane);
+                        return null;
+                    }
+                    String[] splitRounds = responseRounds.split("_");
+                    PropertiesHandler.setProperty("roundsNumber", splitRounds[splitRounds.length - 1]);
+                    PropertiesHandler.saveProperties();
                 } else {
                     String nickname = PropertiesHandler.getProperty("nickname");
-                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@");
+                    String response = ConnectionHandler.sendRequest("SET_NICKNAME_" + nickname + "_@", "nickname");
                     if (response == null) {
                         returnToPreviousView(cardLayout, cardPane);
                         return null;
                     }
+
                     String[] split = response.split("_");
-                    PropertiesHandler.setProperty("nickname", split[split.length - 1]);
-                    PropertiesHandler.saveProperties();
-                    System.out.println(response);
+
+                    if ("SUCCESS".equals(split[split.length - 2])) {
+                        enter.setVisible(true);
+                        PropertiesHandler.setProperty("nickname", split[split.length - 1]);
+                        PropertiesHandler.saveProperties();
+                    } else {
+                        enter.setVisible(false);
+                        JOptionPane.showMessageDialog(
+                                JOptionPane.getFrameForComponent(null),
+                                "Your nick is already used!",
+                                "ACHTUNG!",
+                                JOptionPane.ERROR_MESSAGE);
+
+
+                        returnToPreviousView(cardLayout, cardPane);
+
+
+                        return null;
+                    }
                 }
                 try {
                     semaphore2.acquire();
@@ -174,12 +204,12 @@ public class LoadingView extends MyView implements PropertyChangeListener {
 
             }
 
-            System.out.println(address);
-            System.out.println(ConnectionHandler.port);
-
             try {
-                progressThread.join();
+                if (progressThread.isAlive()) {
+                    progressThread.join();
+                }
             } catch (InterruptedException e) {
+                e.printStackTrace();
                 return null;
 
             }
@@ -189,7 +219,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
         @Override
         public void done() {
             setCursor(null);
-            System.out.println("done " + connectionTask.getProgress());
             if (connectionTask.getProgress() == 100) {
 
                 Toolkit.getDefaultToolkit().beep();
@@ -210,7 +239,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         try {
                             Thread.sleep(40);
                         } catch (InterruptedException e) {
-                            System.out.println("2 " + Thread.currentThread().getName());
                             return;
                         }
                         connectionTask.setProgress(progress);
@@ -220,7 +248,6 @@ public class LoadingView extends MyView implements PropertyChangeListener {
                         semaphore.acquire();
 
                     } catch (InterruptedException e) {
-                        System.out.println("1 " + Thread.currentThread().getName());
                         return;
                     }
                 }

@@ -13,9 +13,6 @@ out
 # BlueJ files
 *.ctxt
 
-# Mobile put.poznan.tools.Tools for Java (J2ME)
-.mtj.tmp/
-
 # Package Files #
 *.jar
 *.war
@@ -24,9 +21,6 @@ out
 *.zip
 *.tar.gz
 *.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
 
 # VSCode
 .vscode
@@ -63,6 +57,9 @@ hs_err_pid*
 *.exe
 *.out
 *.app
+
+# List FIles
+*.lst
 
 # Java Properties
 *.properties

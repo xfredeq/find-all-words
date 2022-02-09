@@ -1,6 +1,7 @@
-package put.poznan.GUI;
+package gui.helpers;
 
-import put.poznan.tools.MyView;
+
+import gui.view.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,31 +20,11 @@ public class Window extends JFrame implements ActionListener {
     private JMenuItem close, connectionSettings, about;
 
     private ConnectionDialog connectionDialog;
-
-    public int getWindowWidth() {
-        return windowWidth;
-    }
-
-    public void setWindowWidth(int windowWidth) {
-        this.windowWidth = windowWidth;
-    }
-
-    public int getWindowHeight() {
-        return windowHeight;
-    }
-
-    public void setWindowHeight(int windowHeight) {
-        this.windowHeight = windowHeight;
-    }
-
     private int windowWidth;
     private int windowHeight;
 
     public Window() {
-
-
         super("FindAllWords");
-        System.out.println("window " + Thread.currentThread().getName());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setWindowWidth(1024);
         this.setWindowHeight(720);
@@ -65,7 +46,6 @@ public class Window extends JFrame implements ActionListener {
         this.views = new ArrayList<>();
         this.cardPane = new JPanel(this.cardLayout);
 
-
         this.cardPane.setBackground(Color.LIGHT_GRAY);
 
         this.addViews();
@@ -74,6 +54,14 @@ public class Window extends JFrame implements ActionListener {
         this.cardLayout.show(cardPane, "put.poznan.GUI.StartView");
 
         this.setVisible(true);
+    }
+
+    public void setWindowWidth(int windowWidth) {
+        this.windowWidth = windowWidth;
+    }
+
+    public void setWindowHeight(int windowHeight) {
+        this.windowHeight = windowHeight;
     }
 
     private void setMyMenuBar() {
@@ -111,17 +99,21 @@ public class Window extends JFrame implements ActionListener {
 
     private void addViews() {
         this.views.add(new StartView());
-        this.views.add(new LoadingView(cardLayout, cardPane));
-        this.views.add(new LobbyView());
-        this.views.add(new VoteView());
-        this.views.add(new GameView());
+        this.views.add(new LoadingView(this.cardLayout, this.cardPane));
+        this.views.add(new LobbyView(this.cardLayout, this.cardPane));
+        this.views.add(new VoteView(this.cardLayout, this.cardPane));
+        this.views.add(new GameView(this.cardLayout, this.cardPane));
         for (var view : this.views) {
             if (view.getNextViewButton() != null) {
                 view.getNextViewButton().addActionListener(this);
             }
+            if (view.getSecondaryNextViewButton() != null) {
+                view.getSecondaryNextViewButton().addActionListener(this);
+            }
             if (view.getPreviousViewButton() != null) {
                 view.getPreviousViewButton().addActionListener(this);
             }
+
             this.cardPane.add(view, view.getViewName());
         }
     }
@@ -136,8 +128,14 @@ public class Window extends JFrame implements ActionListener {
                 dispose();
             }
 
-        } else if (source == this.about) { // #TODO text from properties
-            JOptionPane.showMessageDialog(this, "TODO", "About", JOptionPane.INFORMATION_MESSAGE);
+        } else if (source == this.about) {
+            JOptionPane.showMessageDialog(this, """
+                    This is an online game called "Find all words".\s
+                    The goal is to assemble as many words as possible from letters sent by server.\s
+                    Points are awarded for words that are in the system dictionary.\s
+                    Penalty is applied when the word is not present in the dictionary.\s
+                    Letters are taken away when assembled word is proper.\s
+                    """, "About", JOptionPane.INFORMATION_MESSAGE);
 
         } else if (source == this.connectionSettings) {
             if (this.connectionDialog == null) {
@@ -159,31 +157,33 @@ public class Window extends JFrame implements ActionListener {
                         break;
                     }
                 }
-                System.out.println("moooveee");
                 if (view.moveToNextView(this.cardLayout, this.cardPane)) {
-                    System.out.println("action");
                     nextView.onShowAction();
-                    System.out.println("after action");
                 }
+            } else if (view.getSecondaryNextViewButton() != null && source == view.getSecondaryNextViewButton()) {
+                for (var v : this.views) {
+                    if (view.getNextViewName().equals(v.getViewName())) {
+                        nextView = v;
+                        break;
+                    }
+                }
+                nextView.onShowAction();
             } else if (source == view.getPreviousViewButton()) {
                 MyView previousView = null;
-                if (view.getViewName().equals("ConnectingView") || view.getViewName().equals("LobbyView")) {
+                if (view.getViewName().equals("LoadingView") || view.getViewName().equals("LobbyView")) {
                     this.menuSettings.setVisible(true);
                 }
-                view.returnToPreviousView(this.cardLayout, this.cardPane);
                 for (var v : this.views) {
                     if (view.getPreviousViewName().equals(v.getViewName())) {
                         previousView = v;
                         break;
                     }
                 }
-                previousView.onShowAction();
                 view.returnToPreviousView(this.cardLayout, this.cardPane);
+                previousView.onShowAction();
             }
         }
     }
-
-
 
 
 }

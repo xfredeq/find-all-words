@@ -1,17 +1,23 @@
-package put.poznan.GUI;
+package gui.view;
 
-import put.poznan.networking.ConnectionHandler;
-import put.poznan.tools.MyView;
-import put.poznan.tools.PropertiesHandler;
+import gui.helpers.Lobby;
+import tools.ConnectionHandler;
+import tools.PropertiesHandler;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class LobbyView extends MyView implements ActionListener {
+
+    private final JPanel cardPane;
+    private final CardLayout cardLayout;
 
     private final ActionListener listener = this;
     private JLabel title;
@@ -27,8 +33,12 @@ public class LobbyView extends MyView implements ActionListener {
 
     private UpdateLobbyInfo updater;
 
+    private Lobby selectedLobby;
 
-    LobbyView() {
+    public LobbyView(CardLayout cardLayout, JPanel cardPane) {
+        this.cardLayout = cardLayout;
+        this.cardPane = cardPane;
+
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.setComponents();
         this.addComponents();
@@ -40,7 +50,6 @@ public class LobbyView extends MyView implements ActionListener {
         this.previousViewName = "StartView";
         this.title = new JLabel("Lobbies");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        //title.setAlignmentY(Component.TOP_ALIGNMENT);
         title.setFont(new Font("Verdana", Font.BOLD, 80));
         title.setBackground(new Color(1.0f, 1.0f, 1.0f, 0.5f));
         title.setForeground(Color.GREEN);
@@ -53,16 +62,15 @@ public class LobbyView extends MyView implements ActionListener {
 
         this.lobbies = new HashMap<>();
 
-        //#TODO ButtonPanelFactory
-
         this.join = new JButton("Join lobby");
         this.join.setVisible(false);
         this.nextViewButton = this.join;
 
         this.create = new JButton("Create lobby");
         this.create.addActionListener(this);
+        this.secondaryNextViewButton = this.create;
 
-        this.cancel = new JButton("cancel");
+        this.cancel = new JButton("Leave game");
         this.previousViewButton = this.cancel;
 
         this.buttonPanel = new JPanel();
@@ -84,7 +92,6 @@ public class LobbyView extends MyView implements ActionListener {
     private void addComponents() {
         add(Box.createVerticalGlue());
         add(this.title);
-        //add(Box.createVerticalGlue());
         add(this.nickname);
         add(Box.createVerticalGlue());
         add(this.lobbyPanel);
@@ -96,44 +103,54 @@ public class LobbyView extends MyView implements ActionListener {
 
     @Override
     public void onShowAction() {
-        /*this.lobbyPanel.removeAll();
-        for (int i = 0; i < 5; i++) {
-            Lobby lobby = new Lobby();
-            this.lobbies.add(lobby);
-            lobby.getSelect().addActionListener(this);
-            this.lobbyPanel.add(lobby);
-        }
-        this.lobbyPanel.revalidate();
-        validate();*/
-        String nick = PropertiesHandler.getProperty("nickname");
-        this.nickname.setText("Hi " + nick + ", join or create the game:");
+        this.lobbies.clear();
+        this.lobbyPanel.removeAll();
+        this.selectedLobby = null;
 
-        this.updater = new UpdateLobbyInfo();
-        this.updater.execute();
-        System.out.println("updater started");
-
-    }
-
-    @Override
-    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
-        this.updater.cancel(true);
-        //#TODO break connection
         for (Lobby l : this.lobbies.values()) {
             l.getSelect().setBackground(Color.YELLOW);
         }
         this.join.setVisible(false);
-        ConnectionHandler.endConnection();
 
+        String nick = PropertiesHandler.getProperty("nickname");
+        this.nickname.setText("Hi " + nick + ", join or create the game:");
+
+
+        this.updater = new UpdateLobbyInfo();
+        this.updater.execute();
+    }
+
+    @Override
+    public void returnToPreviousView(CardLayout cardLayout, JPanel cardPane) {
+        this.shutdownAll();
         super.returnToPreviousView(cardLayout, cardPane);
     }
 
     @Override
     public boolean moveToNextView(CardLayout cardLayout, JPanel cardPane) {
-        for (Lobby l : this.lobbies.values()) {
-            l.getSelect().setBackground(Color.YELLOW);
+        this.updater.cancel(true);
+
+        int nr = this.selectedLobby.getNumber();
+        String response = ConnectionHandler.sendRequest(
+                "LOBBY_JOIN_" + nr + "_@", "lobbyJoin");
+        if (response == null) {
+            this.returnToPreviousView(cardLayout, cardPane);
+            return false;
         }
-        this.join.setVisible(false);
-        return super.moveToNextView(cardLayout, cardPane);
+
+        String[] split = response.split("_");
+        if ("SUCCESS".equals(split[split.length - 2])) {
+            return super.moveToNextView(cardLayout, cardPane);
+        } else {
+            return false;
+        }
+
+    }
+
+    @Override
+    protected void shutdownAll() {
+        this.updater.cancel(true);
+        ConnectionHandler.endConnection();
     }
 
 
@@ -146,13 +163,23 @@ public class LobbyView extends MyView implements ActionListener {
                     l.getSelect().setBackground(Color.YELLOW);
                 }
                 lobby.getSelect().setBackground(Color.GREEN);
+                this.selectedLobby = lobby;
                 this.join.setVisible(true);
             }
         }
 
         if (source == this.create) {
-            String response = ConnectionHandler.sendRequest("CREATE_LOBBY_@");
-            System.out.println(Arrays.toString(response.split("_")));
+            this.updater.cancel(true);
+            String response = ConnectionHandler.sendRequest(
+                    "LOBBY_CREATE_@", "lobbyCreate");
+            if (response == null) {
+                returnToPreviousView(cardLayout, cardPane);
+            } else {
+                String[] split = response.split("_");
+                if ("SUCCESS".equals(split[split.length - 2])) {
+                    cardLayout.show(cardPane, this.nextViewName);
+                }
+            }
         }
     }
 
@@ -161,13 +188,16 @@ public class LobbyView extends MyView implements ActionListener {
 
         @Override
         protected Void doInBackground() {
-            for (String response = ConnectionHandler.sendRequest("GET_LOBBIES_@");
-                 !isCancelled() && response != null;
-                 response = ConnectionHandler.sendRequest("GET_LOBBIES_@")) {
-                publish(response);
+
+            publish(ConnectionHandler.sendRequest("GET_LOBBIES_@", "lobbiesEntry"));
+
+            while (!isCancelled()) {
                 try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignore) {
+                    publish(ConnectionHandler.responseTable.get("lobbies")
+                            .messages.poll(ConnectionHandler.generalTimeout, TimeUnit.SECONDS));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return null;
                 }
             }
             return null;
@@ -176,25 +206,27 @@ public class LobbyView extends MyView implements ActionListener {
         @Override
         protected void process(List<String> chunks) {
             String response = chunks.get(chunks.size() - 1);
-            List<String> split;
-            split = new ArrayList<>(List.of(response.split("_")));
-            int count = Integer.parseInt(split.get(3));
-            for (int i = 0; i < count; i++) {
-                String number = split.get(5 + 4 * i);
-                String players = split.get(7 + 4 * i);
+            if (response != null) {
+                List<String> split;
+                split = new ArrayList<>(List.of(response.split("_")));
+                int count = Integer.parseInt(split.get(3));
+                lobbies.clear();
+                lobbyPanel.removeAll();
+                lobbyPanel.revalidate();
+                validate();
+                for (int i = 0; i < count; i++) {
+                    String number = split.get(5 + 4 * i);
+                    String players = split.get(7 + 4 * i);
 
-                Lobby lobby = lobbies.get(number);
-                if (lobby != null) {
-                    lobby.updatePlayersNumber(players);
-                } else {
-                    Lobby l = new Lobby(players);
+                    Lobby l = new Lobby(number, players);
                     lobbies.put(number, l);
                     l.getSelect().addActionListener(listener);
                     lobbyPanel.add(l);
-                    lobbyPanel.revalidate();
-                    validate();
                 }
+                lobbyPanel.revalidate();
+                validate();
             }
         }
     }
 }
+
